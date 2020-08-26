@@ -1,6 +1,6 @@
-# TextFormatter
+# csharp-text-formatter
 
-TextFormatter is a test/sample C# solution with an ordinary (non-MFC) C++ DLL project.
+csharp-text-formatter is a test/sample C# solution with an ordinary (non-MFC) C++ DLL project.
 
 The purpose of this solution is to work out how to create a C++ DLL and utilise it in C#.
 
@@ -40,7 +40,7 @@ In order for the C# project to successfully run, it needs to be able to find Dir
 3. Right-click the **lib** folder in the **TextFormatter** project.
 4. In the context menu: **Add**, **Existing Item&hellip;**
 5. Change the file types drop down to **Executable Files** (or all files, you're looking for a .dll)
-6. Browse to the root directory for the solution - if you're in the directory **TextFormatter\TextFormatter**, you need to go up a directory.
+6. Browse to the root directory for the solution - if you're in the directory **csharp-text-formatter\TextFormatter**, you need to go up a directory.
 7. Find the DLL you built in step 1. If you chose Debug and x64, it will likely be in **x64\Debug**. Select the **Direct2DWrapper.dll** file.
 8. Click the arrow next to the **Add** button, and click **Add as Link**.
 9. Right-click the link file **lib\Direct2DWrapper.dll** and click **Properties**.

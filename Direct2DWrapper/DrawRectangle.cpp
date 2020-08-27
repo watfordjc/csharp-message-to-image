@@ -118,6 +118,75 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
+	ID2D1SolidColorBrush* CreateSolidColorBrush(ID2D1RenderTarget* pD2D1RenderTarget, UINT32 argb)
+	{
+		ID2D1SolidColorBrush* pD2D1SolidColorBrush = NULL;
+		HRESULT hr = pD2D1RenderTarget->CreateSolidColorBrush(
+			D2D1::ColorF(D2D1::ColorF( // using overload ColorF(UINT32 rgb, float a)
+				argb & 0xFFFFFF, // Lower 24 bits are 0xRRGGBB
+				((float)(argb >> 24 & 0xFF)) / 0xFF // Upper 8 bits are 0xAA - bit shift, cast to float, then divide by 255 (0xFF)
+			)),
+			&pD2D1SolidColorBrush
+		);
+		return pD2D1SolidColorBrush;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+	void ReleaseSolidColorBrush(ID2D1SolidColorBrush* pD2D1SolidColorBrush)
+	{
+		SafeRelease(&pD2D1SolidColorBrush);
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+	bool DrawRectangleBorder(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth)
+	{
+		pD2D1RenderTarget->BeginDraw();
+
+		pD2D1RenderTarget->DrawRectangle(
+			D2D1::RectF(
+				startX + (lineWidth / 2),
+				startY + (lineWidth / 2),
+				startX + lengthX + (lineWidth * 1.5),
+				startY + lengthY + (lineWidth * 1.5)
+			),
+			pD2D1SolidColorBrush,
+			lineWidth
+		);
+
+		HRESULT hr = pD2D1RenderTarget->EndDraw();
+		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET)
+		{
+			SafeRelease(&pD2D1RenderTarget);
+			return false;
+		}
+		return true;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		bool DrawRectangle(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY)
+	{
+		pD2D1RenderTarget->BeginDraw();
+
+		pD2D1RenderTarget->FillRectangle(
+			D2D1::RectF(
+				startX,
+				startY,
+				startX + lengthX,
+				startY + lengthY
+			),
+			pD2D1SolidColorBrush
+		);
+
+		HRESULT hr = pD2D1RenderTarget->EndDraw();
+		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET)
+		{
+			SafeRelease(&pD2D1RenderTarget);
+			return false;
+		}
+		return true;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT SaveImage(IWICImagingFactory* pWICImagingFactory, IWICBitmap* pWICBitmap, ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR filename)
 	{
 

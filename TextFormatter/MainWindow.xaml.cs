@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -24,8 +25,8 @@ namespace TextFormatter
     /// </summary>
     public partial class MainWindow : Window, IDisposable
     {
-        private readonly IntPtr direct2DFactory;
-        private readonly IntPtr imagingFactory;
+        private readonly IntPtr direct2DFactory = Interop.UnsafeNativeMethods.CreateD2D1Factory();
+        private readonly IntPtr imagingFactory = Interop.UnsafeNativeMethods.CreateImagingFactory();
         private IntPtr bitmap;
         private IntPtr canvas;
         private bool disposedValue;
@@ -35,8 +36,6 @@ namespace TextFormatter
             InitializeComponent();
             Trace.WriteLine(Interop.UnsafeNativeMethods.Add(3, 6));
 
-            direct2DFactory = Interop.UnsafeNativeMethods.CreateD2D1Factory();
-            IntPtr imagingFactory = Interop.UnsafeNativeMethods.CreateImagingFactory();
             bitmap = Interop.UnsafeNativeMethods.CreateWICBitmap(imagingFactory, 1200, 3096);
             canvas = Interop.UnsafeNativeMethods.CreateRenderTarget(direct2DFactory, bitmap);
             if (DrawAndSaveImage() == ReturnCode.LOST_D2D1_RENDER_TARGET)
@@ -45,7 +44,6 @@ namespace TextFormatter
             }
             Interop.UnsafeNativeMethods.ReleaseRenderTarget(canvas);
             Interop.UnsafeNativeMethods.ReleaseWICBitmap(bitmap);
-            Interop.UnsafeNativeMethods.ReleaseImagingFactory(imagingFactory);
         }
 
         private enum ReturnCode
@@ -68,6 +66,12 @@ namespace TextFormatter
                     return ReturnCode.LOST_D2D1_RENDER_TARGET;
                 }
             }
+            IntPtr greenBrush = Interop.UnsafeNativeMethods.CreateSolidColorBrush(canvas, (uint)System.Drawing.Color.Green.ToArgb());
+            IntPtr blueBrush = Interop.UnsafeNativeMethods.CreateSolidColorBrush(canvas, (uint)System.Drawing.Color.CadetBlue.ToArgb());
+            Interop.UnsafeNativeMethods.DrawRectangleBorder(canvas, greenBrush, 0, 0, 512, 512, 4);
+            Interop.UnsafeNativeMethods.DrawRectangle(canvas, blueBrush, 4, 4, 512, 512);
+            Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(blueBrush);
+            Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(greenBrush);
             Trace.WriteLine("Image drawing successful!");
             #endregion
             #region Save Image
@@ -106,6 +110,7 @@ namespace TextFormatter
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                Interop.UnsafeNativeMethods.ReleaseImagingFactory(imagingFactory);
                 Interop.UnsafeNativeMethods.ReleaseD2D1Factory(direct2DFactory);
                 // TODO: set large fields to null
                 disposedValue = true;

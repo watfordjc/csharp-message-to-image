@@ -40,7 +40,7 @@ namespace Direct2DWrapper
 		void ReleaseD2D1Factory(ID2D1Factory* pD2D1Factory);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-	IWICImagingFactory* CreateImagingFactory();
+		IWICImagingFactory* CreateImagingFactory();
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		void ReleaseImagingFactory(IWICImagingFactory* pWICImagingFactory);
@@ -56,6 +56,18 @@ namespace Direct2DWrapper
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		void ReleaseRenderTarget(ID2D1RenderTarget* pD2D1RenderTarget);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		ID2D1SolidColorBrush* CreateSolidColorBrush(ID2D1RenderTarget* pD2D1RenderTarget, UINT32 argb);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseSolidColorBrush(ID2D1SolidColorBrush* pD2D1SolidColorBrush);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		bool DrawRectangleBorder(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		bool DrawRectangle(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY);
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		bool DrawImage(ID2D1RenderTarget* pD2D1RenderTarget);

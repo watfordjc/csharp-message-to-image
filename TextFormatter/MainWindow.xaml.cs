@@ -27,6 +27,7 @@ namespace TextFormatter
     {
         private readonly IntPtr direct2DFactory = Interop.UnsafeNativeMethods.CreateD2D1Factory();
         private readonly IntPtr imagingFactory = Interop.UnsafeNativeMethods.CreateImagingFactory();
+        private System.Drawing.Size canvasDimensions = new System.Drawing.Size(1200, 3096);
         private IntPtr bitmap;
         private IntPtr canvas;
         private bool disposedValue;
@@ -36,7 +37,7 @@ namespace TextFormatter
             InitializeComponent();
             Trace.WriteLine(Interop.UnsafeNativeMethods.Add(3, 6));
 
-            bitmap = Interop.UnsafeNativeMethods.CreateWICBitmap(imagingFactory, 1200, 3096);
+            bitmap = Interop.UnsafeNativeMethods.CreateWICBitmap(imagingFactory, (uint)canvasDimensions.Width, (uint)canvasDimensions.Height);
             canvas = Interop.UnsafeNativeMethods.CreateRenderTarget(direct2DFactory, bitmap);
             if (DrawAndSaveImage() == ReturnCode.LOST_D2D1_RENDER_TARGET)
             {
@@ -66,12 +67,27 @@ namespace TextFormatter
                     return ReturnCode.LOST_D2D1_RENDER_TARGET;
                 }
             }
-            IntPtr greenBrush = Interop.UnsafeNativeMethods.CreateSolidColorBrush(canvas, (uint)System.Drawing.Color.Green.ToArgb());
-            IntPtr blueBrush = Interop.UnsafeNativeMethods.CreateSolidColorBrush(canvas, (uint)System.Drawing.Color.CadetBlue.ToArgb());
-            Interop.UnsafeNativeMethods.DrawRectangleBorder(canvas, greenBrush, 0, 0, 512, 512, 4);
-            Interop.UnsafeNativeMethods.DrawRectangle(canvas, blueBrush, 4, 4, 512, 512);
-            Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(blueBrush);
-            Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(greenBrush);
+            IntPtr borderBrush = Interop.UnsafeNativeMethods.CreateSolidColorBrush(canvas, (uint)System.Drawing.Color.Green.ToArgb());
+            IntPtr backgroundBrush = Interop.UnsafeNativeMethods.CreateSolidColorBrush(canvas, (uint)System.Drawing.Color.CadetBlue.ToArgb());
+            System.Drawing.Size rectangleDimensions = new System.Drawing.Size(512, 512);
+            int borderWidth = 4;
+            System.Drawing.Point centredTopLeft = new System.Drawing.Point()
+            {
+                X = (canvasDimensions.Width - rectangleDimensions.Width) / 2 - borderWidth,
+                Y = (canvasDimensions.Height - rectangleDimensions.Height) / 2 - borderWidth
+            };
+            if ((canvasDimensions.Width - rectangleDimensions.Width) % 2 == 0 && borderWidth % 2 == 0)
+            {
+                Trace.WriteLine("Rectangle cannot be centred horizontally: off by 0.5 pixels.");
+            }
+            if ((canvasDimensions.Height - rectangleDimensions.Height) % 2 == 0 && borderWidth % 2 == 0)
+            {
+                Trace.WriteLine("Rectangle cannot be centred vertically: off by 0.5 pixels.");
+            }
+            Interop.UnsafeNativeMethods.DrawRectangleBorder(canvas, borderBrush, centredTopLeft.X, centredTopLeft.Y, rectangleDimensions.Width, rectangleDimensions.Height, borderWidth);
+            Interop.UnsafeNativeMethods.DrawRectangle(canvas, backgroundBrush, centredTopLeft.X + borderWidth, centredTopLeft.Y + borderWidth, rectangleDimensions.Width, rectangleDimensions.Height);
+            Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(backgroundBrush);
+            Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(borderBrush);
             Trace.WriteLine("Image drawing successful!");
             #endregion
             #region Save Image

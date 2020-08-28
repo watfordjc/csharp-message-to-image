@@ -118,7 +118,7 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-	ID2D1SolidColorBrush* CreateSolidColorBrush(ID2D1RenderTarget* pD2D1RenderTarget, UINT32 argb)
+		ID2D1SolidColorBrush* CreateSolidColorBrush(ID2D1RenderTarget* pD2D1RenderTarget, UINT32 argb)
 	{
 		ID2D1SolidColorBrush* pD2D1SolidColorBrush = NULL;
 		HRESULT hr = pD2D1RenderTarget->CreateSolidColorBrush(
@@ -132,13 +132,13 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-	void ReleaseSolidColorBrush(ID2D1SolidColorBrush* pD2D1SolidColorBrush)
+		void ReleaseSolidColorBrush(ID2D1SolidColorBrush* pD2D1SolidColorBrush)
 	{
 		SafeRelease(&pD2D1SolidColorBrush);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-	bool DrawRectangleBorder(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth)
+		bool DrawRectangleBorder(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth)
 	{
 		pD2D1RenderTarget->BeginDraw();
 
@@ -184,6 +184,71 @@ namespace Direct2DWrapper
 			return false;
 		}
 		return true;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT DrawImageFromFilename(IWICImagingFactory* pWICImagingFactory, ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR filename, int startX, int startY, int width, int height)
+	{
+		IWICBitmapDecoder* pWICBitmapDecoder = NULL;
+		IWICBitmapFrameDecode* pWICBitmapFrameDecode = NULL;
+		IWICFormatConverter* pWICFormatConverter = NULL;
+		ID2D1Bitmap* pD2D1Bitmap = NULL;
+
+		HRESULT hr = pWICImagingFactory->CreateDecoderFromFilename(
+			filename,
+			NULL,
+			GENERIC_READ,
+			WICDecodeMetadataCacheOnLoad,
+			&pWICBitmapDecoder
+		);
+		if (SUCCEEDED(hr))
+		{
+			hr = pWICBitmapDecoder->GetFrame(0, &pWICBitmapFrameDecode);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = pWICImagingFactory->CreateFormatConverter(&pWICFormatConverter);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = pWICFormatConverter->Initialize(
+				pWICBitmapFrameDecode,
+				GUID_WICPixelFormat32bppPBGRA,
+				WICBitmapDitherTypeNone,
+				NULL,
+				0.f,
+				WICBitmapPaletteTypeMedianCut
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = pD2D1RenderTarget->CreateBitmapFromWicBitmap(
+				pWICFormatConverter,
+				NULL,
+				&pD2D1Bitmap
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			pD2D1RenderTarget->BeginDraw();
+			pD2D1RenderTarget->DrawBitmap(
+				pD2D1Bitmap,
+				D2D1::RectF(
+					startX,
+					startY,
+					startX + width,
+					startY + height
+				),
+				1.0f,
+				D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+			);
+			hr = pD2D1RenderTarget->EndDraw();
+		}
+		SafeRelease(&pD2D1Bitmap);
+		SafeRelease(&pWICFormatConverter);
+		SafeRelease(&pWICBitmapFrameDecode);
+		SafeRelease(&pWICBitmapDecoder);
+		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION

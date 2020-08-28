@@ -67,8 +67,8 @@ namespace TextFormatter
                     return ReturnCode.LOST_D2D1_RENDER_TARGET;
                 }
             }
-            IntPtr borderBrush = Interop.UnsafeNativeMethods.CreateSolidColorBrush(canvas, (uint)System.Drawing.Color.Green.ToArgb());
-            IntPtr backgroundBrush = Interop.UnsafeNativeMethods.CreateSolidColorBrush(canvas, (uint)System.Drawing.Color.CadetBlue.ToArgb());
+            IntPtr borderBrush = Interop.UnsafeNativeMethods.CreateSolidColorBrush(canvas, (uint)System.Drawing.Color.DarkGray.ToArgb());
+            IntPtr backgroundBrush = Interop.UnsafeNativeMethods.CreateSolidColorBrush(canvas, (uint)System.Drawing.Color.Black.ToArgb());
             System.Drawing.Size rectangleDimensions = new System.Drawing.Size(512, 512);
             int borderWidth = 4;
             System.Drawing.Point centredTopLeft = new System.Drawing.Point()
@@ -88,6 +88,15 @@ namespace TextFormatter
             Interop.UnsafeNativeMethods.DrawRectangle(canvas, backgroundBrush, centredTopLeft.X + borderWidth, centredTopLeft.Y + borderWidth, rectangleDimensions.Width, rectangleDimensions.Height);
             Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(backgroundBrush);
             Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(borderBrush);
+            string profileImageFilename = @"C:\JohnDocs\tmp2\Computing\Web Sites\image manipulation\shaving_250px_round.png";
+            try
+            {
+                Interop.UnsafeNativeMethods.DrawImageFromFilename(imagingFactory, canvas, profileImageFilename, centredTopLeft.X + borderWidth, centredTopLeft.Y + borderWidth, rectangleDimensions.Width, rectangleDimensions.Height);
+            }
+            catch (FileNotFoundException e)
+            {
+                Trace.WriteLine($"Error reading file {profileImageFilename}: {e.Message} - {e.InnerException?.Message}");
+            }
             Trace.WriteLine("Image drawing successful!");
             #endregion
             #region Save Image

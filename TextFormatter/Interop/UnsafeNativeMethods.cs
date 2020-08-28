@@ -135,13 +135,27 @@ namespace TextFormatter.Interop
         internal extern static bool DrawRectangle(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY);
 
         /// <summary>
+        /// Draw an image from a filename
+        /// </summary>
+        /// <param name="pWICImagingFactory">A pointer to an IWICImagingFactory</param>
+        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="filename">The path to the file of an existing image</param>
+        /// <param name="startX">The x coordinate of the top-left pixel</param>
+        /// <param name="startY">The y coordinate of the top-left pixel</param>
+        /// <param name="width">The width of the image to be drawn after resizing</param>
+        /// <param name="height">The height of the image to be drawn after resizing</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
+        internal extern static int DrawImageFromFilename(IntPtr pWICImagingFactory, IntPtr pD2D1RenderTarget, String filename, int startX, int startY, int width, int height);
+
+        /// <summary>
         /// Save a drawn image
         /// </summary>
         /// <param name="pWICImagingFactory">A pointer to an IWICImagingFactory</param>
         /// <param name="pWICBitmap">A pointer to an IWICBitmap</param>
         /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
         /// <param name="filename">The path to the file where the image is to be saved</param>
-        /// <returns>True if the image was saved successfully, otherwise False</returns>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
         internal extern static int SaveImage(IntPtr pWICImagingFactory, IntPtr pWICBitmap, IntPtr pD2D1RenderTarget, String filename);
     }

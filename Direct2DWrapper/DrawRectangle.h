@@ -70,6 +70,9 @@ namespace Direct2DWrapper
 		bool DrawRectangle(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY);
 
 	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT DrawImageFromFilename(IWICImagingFactory* pWICImagingFactory, ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR filename, int startX, int startY, int width, int height);
+
+	DIRECT2DWRAPPER_C_FUNCTION
 		bool DrawImage(ID2D1RenderTarget* pD2D1RenderTarget);
 
 	DIRECT2DWRAPPER_C_FUNCTION

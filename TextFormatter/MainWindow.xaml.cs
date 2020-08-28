@@ -28,7 +28,7 @@ namespace TextFormatter
     {
         private readonly IntPtr direct2DFactory = Interop.UnsafeNativeMethods.CreateD2D1Factory();
         private readonly IntPtr imagingFactory = Interop.UnsafeNativeMethods.CreateImagingFactory();
-        private System.Drawing.Size canvasDimensions = new System.Drawing.Size(1200, 3096);
+        private System.Drawing.Size canvasDimensions = new System.Drawing.Size(1280, 3408);
         private IntPtr bitmap;
         private IntPtr canvas;
         private readonly Dictionary<string, IntPtr> brushes = new Dictionary<string, IntPtr>();

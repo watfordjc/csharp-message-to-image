@@ -193,6 +193,13 @@ namespace Direct2DWrapper
 		IWICBitmapFrameDecode* pWICBitmapFrameDecode = NULL;
 		IWICFormatConverter* pWICFormatConverter = NULL;
 		ID2D1Bitmap* pD2D1Bitmap = NULL;
+		ID2D1Effect* pBitmapSourceEffect = NULL;
+		ID2D1DeviceContext* pD2D1DeviceContext = NULL;
+
+		pD2D1RenderTarget->QueryInterface(
+			__uuidof(ID2D1DeviceContext),
+			reinterpret_cast<void**>(&pD2D1DeviceContext)
+		);
 
 		HRESULT hr = pWICImagingFactory->CreateDecoderFromFilename(
 			filename,
@@ -230,24 +237,60 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
+			hr = pD2D1DeviceContext->CreateEffect(
+				CLSID_D2D1BitmapSource,
+				&pBitmapSourceEffect
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = pBitmapSourceEffect->SetValue(
+				D2D1_BITMAPSOURCE_PROP_WIC_BITMAP_SOURCE,
+				pWICFormatConverter
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			D2D1_SIZE_F originalSize = pD2D1Bitmap->GetSize();
+			D2D1_VECTOR_2F resizeVector = D2D1::Vector2F(
+				width / originalSize.width,
+				height / originalSize.height
+			);
+			hr = pBitmapSourceEffect->SetValue(
+				D2D1_BITMAPSOURCE_PROP_SCALE,
+				resizeVector
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = pBitmapSourceEffect->SetValue(
+				D2D1_BITMAPSOURCE_PROP_INTERPOLATION_MODE,
+				D2D1_BITMAPSOURCE_INTERPOLATION_MODE_CUBIC
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
 			pD2D1RenderTarget->BeginDraw();
-			pD2D1RenderTarget->DrawBitmap(
-				pD2D1Bitmap,
+			pD2D1DeviceContext->DrawImage(
+				pBitmapSourceEffect,
+				D2D1::Point2F(startX, startY),
 				D2D1::RectF(
-					startX,
-					startY,
-					startX + width,
-					startY + height
+					0,
+					0,
+					width,
+					height
 				),
-				1.0f,
-				D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+				D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC,
+				D2D1_COMPOSITE_MODE_SOURCE_OVER
 			);
 			hr = pD2D1RenderTarget->EndDraw();
 		}
+		SafeRelease(&pBitmapSourceEffect);
 		SafeRelease(&pD2D1Bitmap);
 		SafeRelease(&pWICFormatConverter);
 		SafeRelease(&pWICBitmapFrameDecode);
 		SafeRelease(&pWICBitmapDecoder);
+		pD2D1DeviceContext->Release();
 		return hr;
 	}
 

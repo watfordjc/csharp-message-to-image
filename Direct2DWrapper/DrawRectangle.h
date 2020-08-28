@@ -15,6 +15,9 @@
 #include <d2d1helper.h>
 #include <d2d1_1.h>
 #include <d2d1_1helper.h>
+#include <d2d1effects.h>
+#include <d2d1effecthelpers.h>
+#pragma comment(lib, "dxguid.lib")
 #include <dwrite.h>
 #include <wincodec.h>
 

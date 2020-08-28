@@ -85,18 +85,21 @@ namespace TextFormatter
                 Trace.WriteLine("Rectangle cannot be centred vertically: off by 0.5 pixels.");
             }
             Interop.UnsafeNativeMethods.DrawRectangleBorder(canvas, borderBrush, centredTopLeft.X, centredTopLeft.Y, rectangleDimensions.Width, rectangleDimensions.Height, borderWidth);
-            Interop.UnsafeNativeMethods.DrawRectangle(canvas, backgroundBrush, centredTopLeft.X + borderWidth, centredTopLeft.Y + borderWidth, rectangleDimensions.Width, rectangleDimensions.Height);
+            //Interop.UnsafeNativeMethods.DrawRectangle(canvas, backgroundBrush, centredTopLeft.X + borderWidth, centredTopLeft.Y + borderWidth, rectangleDimensions.Width, rectangleDimensions.Height);
+            string profileImageFilename = @"C:\JohnDocs\tmp2\Computing\Web Sites\image manipulation\shaving_250px_round.png";
+            //try
+            //{
+            //    Interop.UnsafeNativeMethods.DrawImageFromFilename(imagingFactory, canvas, profileImageFilename, centredTopLeft.X + borderWidth, centredTopLeft.Y + borderWidth, rectangleDimensions.Width, rectangleDimensions.Height);
+            //}
+            //catch (FileNotFoundException e)
+            //{
+            //    Trace.WriteLine($"Error reading file {profileImageFilename}: {e.Message} - {e.InnerException?.Message}");
+            //}
+            // Canvas is in pixels, fonts are in DIPs
+            double pixelMultiplier = 96.0 / 72.0;
+            Interop.UnsafeNativeMethods.DrawTextFromString(canvas, "👩🏿‍⚖️", centredTopLeft.X, centredTopLeft.Y, rectangleDimensions.Width, rectangleDimensions.Height, true, "Segoe UI Emoji", (float)(512 / pixelMultiplier), "en-GB", borderBrush);
             Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(backgroundBrush);
             Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(borderBrush);
-            string profileImageFilename = @"C:\JohnDocs\tmp2\Computing\Web Sites\image manipulation\shaving_250px_round.png";
-            try
-            {
-                Interop.UnsafeNativeMethods.DrawImageFromFilename(imagingFactory, canvas, profileImageFilename, centredTopLeft.X + borderWidth, centredTopLeft.Y + borderWidth, rectangleDimensions.Width, rectangleDimensions.Height);
-            }
-            catch (FileNotFoundException e)
-            {
-                Trace.WriteLine($"Error reading file {profileImageFilename}: {e.Message} - {e.InnerException?.Message}");
-            }
             Trace.WriteLine("Image drawing successful!");
             #endregion
             #region Save Image

@@ -1,26 +1,5 @@
 #pragma once
 
-// Windows Header Files:
-#include <windows.h>
-
-// C RunTime Header Files:
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <wchar.h>
-#include <math.h>
-
-#include <d2d1.h>
-#pragma comment(lib, "d2d1.lib")
-#include <d2d1helper.h>
-#include <d2d1_1.h>
-#include <d2d1_1helper.h>
-#include <d2d1effects.h>
-#include <d2d1effecthelpers.h>
-#pragma comment(lib, "dxguid.lib")
-#include <dwrite.h>
-#include <wincodec.h>
-
 #ifdef DIRECT2DWRAPPER_EXPORTS
 #define DIRECT2DWRAPPER_CPP_CLASS __declspec(dllexport)
 #define DIRECT2DWRAPPER_CPP_FUNCTION __declspec(dllexport)
@@ -74,6 +53,9 @@ namespace Direct2DWrapper
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT DrawImageFromFilename(IWICImagingFactory* pWICImagingFactory, ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR filename, int startX, int startY, int width, int height);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT DrawTextFromString(ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR text, int startX, int startY, int width, int height, bool justifyCentered, PCWSTR fontName, float fontSize, PCWSTR localeName, ID2D1SolidColorBrush* pD2D1SolidColorBrush);
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		bool DrawImage(ID2D1RenderTarget* pD2D1RenderTarget);

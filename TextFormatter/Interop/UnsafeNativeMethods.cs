@@ -148,6 +148,9 @@ namespace TextFormatter.Interop
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
         internal extern static int DrawImageFromFilename(IntPtr pWICImagingFactory, IntPtr pD2D1RenderTarget, String filename, int startX, int startY, int width, int height);
 
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
+        internal extern static int DrawTextFromString(IntPtr pD2D1RenderTarget, String text, int startX, int startY, int width, int height, bool justifyCentered, String fontName, float fontSize, String localeName, IntPtr pD2D1SolidColorBrush);
+
         /// <summary>
         /// Save a drawn image
         /// </summary>

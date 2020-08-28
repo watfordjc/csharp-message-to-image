@@ -295,6 +295,70 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT DrawTextFromString(ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR text, int startX, int startY, int width, int height, bool justifyCentered, PCWSTR fontName, float fontSize, PCWSTR localeName, ID2D1SolidColorBrush* pD2D1SolidColorBrush)
+	{
+		ID2D1DeviceContext4* pD2D1DeviceContext = NULL;
+		IDWriteFactory2* pDWriteFactory = NULL;
+		IDWriteTextFormat2* pDWriteTextFormat2 = NULL;
+
+		pD2D1RenderTarget->QueryInterface(
+			__uuidof(ID2D1DeviceContext),
+			reinterpret_cast<void**>(&pD2D1DeviceContext)
+		);
+
+		HRESULT hr = DWriteCreateFactory(
+			DWRITE_FACTORY_TYPE_SHARED,
+			__uuidof(IDWriteFactory),
+			reinterpret_cast<IUnknown**>(&pDWriteFactory)
+		);
+		if (SUCCEEDED(hr))
+		{
+			IDWriteTextFormat* pDWriteTextFormat = NULL;
+			hr = pDWriteFactory->CreateTextFormat(
+				fontName,
+				NULL,
+				DWRITE_FONT_WEIGHT_NORMAL,
+				DWRITE_FONT_STYLE_NORMAL,
+				DWRITE_FONT_STRETCH_NORMAL,
+				fontSize,
+				localeName,
+				&pDWriteTextFormat
+			);
+			pDWriteTextFormat2 = (IDWriteTextFormat2*)pDWriteTextFormat;
+		}
+		if (SUCCEEDED(hr) && justifyCentered)
+		{
+			hr = pDWriteTextFormat2->SetTextAlignment(
+				DWRITE_TEXT_ALIGNMENT_CENTER
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			D2D1_RECT_F layoutRectangle = D2D1::RectF(
+				startX,
+				startY,
+				startX + width,
+				startY + height
+			);
+			pD2D1RenderTarget->BeginDraw();
+			UINT32 len = wcslen(text);
+			pD2D1DeviceContext->DrawTextW(
+				text,
+				len,
+				pDWriteTextFormat2,
+				&layoutRectangle,
+				pD2D1SolidColorBrush,
+				D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT
+			);
+			hr = pD2D1RenderTarget->EndDraw();
+		}
+		SafeRelease(&pDWriteTextFormat2);
+		SafeRelease(&pDWriteFactory);
+		pD2D1DeviceContext->Release();
+		return hr;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT SaveImage(IWICImagingFactory* pWICImagingFactory, IWICBitmap* pWICBitmap, ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR filename)
 	{
 

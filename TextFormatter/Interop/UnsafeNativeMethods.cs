@@ -83,22 +83,36 @@ namespace TextFormatter.Interop
         internal extern static void ReleaseRenderTarget(IntPtr pD2D1RenderTarget);
 
         /// <summary>
+        /// Call Direct2D BeginDraw()
+        /// </summary>
+        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
+        internal extern static void BeginDraw(IntPtr pD2D1RenderTarget);
+
+        /// <summary>
+        /// Call Direct2D EndDraw()
+        /// </summary>
+        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal extern static int EndDraw(IntPtr pD2D1RenderTarget);
+
+        /// <summary>
         /// Draw an image
         /// </summary>
         /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
-        /// <returns>True if image drawn successfully, False if ID2D1RenderTarget needs recreating</returns>
+        /// <param name="clearColor">A 32-bit unsigned integer containing the 8-bit values for ARGB - 0xAARRGGBB</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static bool DrawImage(IntPtr pD2D1RenderTarget);
+        internal extern static void DrawImage(IntPtr pD2D1RenderTarget, UInt32 clearColor);
 
         /// <summary>
         /// Create an ID2D1SolidColorBrush
         /// </summary>
         /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
-        /// <param name="rgb">A 32-bit unsigned integer containing the 8-bit values for RGB, such as 0x0000FF for Blue</param>
-        /// <param name="alpha">A float for the alpha value</param>
+        /// <param name="fillColor">A 32-bit unsigned integer containing the 8-bit values for ARGB - 0xAARRGGBB</param>
         /// <returns>A pointer to an ID2D1SolidColorBrush</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static IntPtr CreateSolidColorBrush(IntPtr pD2D1RenderTarget, UInt32 argb);
+        internal extern static IntPtr CreateSolidColorBrush(IntPtr pD2D1RenderTarget, UInt32 fillColor);
 
         /// <summary>
         /// Free an ID2D1SolidColorBrush
@@ -117,9 +131,8 @@ namespace TextFormatter.Interop
         /// <param name="lengthX">The length of the rectangle in pixels</param>
         /// <param name="lengthY">The height of the rectangle in pixels</param>
         /// <param name="lineWidth">The brush thickness (line width) of the lines drawn</param>
-        /// <returns>True if rectangle border drawn successfully, False if ID2D1RenderTarget needs recreating</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static bool DrawRectangleBorder(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth);
+        internal extern static void DrawRectangleBorder(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth);
 
         /// <summary>
         /// Draw a rectangle
@@ -130,9 +143,29 @@ namespace TextFormatter.Interop
         /// <param name="startY">The y coordinate of the top-left pixel</param>
         /// <param name="lengthX">The length of the rectangle in pixels</param>
         /// <param name="lengthY">The height of the rectangle in pixels</param>
-        /// <returns>True if rectangle drawn successfully, False if ID2D1RenderTarget needs recreating</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static bool DrawRectangle(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY);
+        internal extern static void DrawRectangle(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY);
+
+        /// <summary>
+        /// Call Direct2D BeginDraw() followed by a PushLayer() of an ellipses
+        /// </summary>
+        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the background/fill colour</param>
+        /// <param name="centerX">The x coordinate of the center of the ellipsis</param>
+        /// <param name="centerY">The y coordinate of the center of the ellipsis</param>
+        /// <param name="radiusX">The x radius of the ellipsis</param>
+        /// <param name="radiusY">The y radius of the ellipsis</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal extern static int PushEllipseLayer(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, float centerX, float centerY, float radiusX, float radiusY);
+
+        /// <summary>
+        /// Call Direct2D PopLayer() followed by EndDraw()
+        /// </summary>
+        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal extern static int PopLayer(IntPtr pD2D1RenderTarget);
 
         /// <summary>
         /// Draw an image from a filename
@@ -148,6 +181,21 @@ namespace TextFormatter.Interop
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
         internal extern static int DrawImageFromFilename(IntPtr pWICImagingFactory, IntPtr pD2D1RenderTarget, String filename, int startX, int startY, int width, int height);
 
+        /// <summary>
+        /// Draw a text string
+        /// </summary>
+        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="text">A string containing the text to draw</param>
+        /// <param name="startX">The x coordinate of the top-left pixel of the text block</param>
+        /// <param name="startY">The y coordinate of the top-left pixel of the text block</param>
+        /// <param name="width">The width of the text block</param>
+        /// <param name="height">The height of the text block</param>
+        /// <param name="justifyCentered">True if text should be centered, False if it should be left-aligned</param>
+        /// <param name="fontName">A string containing the name of the font</param>
+        /// <param name="fontSize">Desire text size in DIPs</param>
+        /// <param name="localeName">A string containing the locale name, such as "en-GB"</param>
+        /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the text colour</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
         internal extern static int DrawTextFromString(IntPtr pD2D1RenderTarget, String text, int startX, int startY, int width, int height, bool justifyCentered, String fontName, float fontSize, String localeName, IntPtr pD2D1SolidColorBrush);
 

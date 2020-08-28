@@ -22,9 +22,14 @@ namespace Direct2DWrapper
 	DIRECT2DWRAPPER_C_FUNCTION
 		ID2D1Factory* CreateD2D1Factory()
 	{
+		D2D1_FACTORY_OPTIONS factoryOptions;
+		factoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+
 		ID2D1Factory* pD2D1Factory = NULL;
+
 		HRESULT hr = D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
+			factoryOptions,
 			&pD2D1Factory
 		);
 		return pD2D1Factory;
@@ -103,18 +108,30 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		bool DrawImage(ID2D1RenderTarget* pD2D1RenderTarget)
+		void BeginDraw(ID2D1RenderTarget* pD2D1RenderTarget)
 	{
 		pD2D1RenderTarget->BeginDraw();
-		pD2D1RenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
+	}
 
+	DIRECT2DWRAPPER_C_FUNCTION
+	HRESULT EndDraw(ID2D1RenderTarget* pD2D1RenderTarget)
+	{
 		HRESULT hr = pD2D1RenderTarget->EndDraw();
 		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET)
 		{
 			SafeRelease(&pD2D1RenderTarget);
-			return false;
 		}
-		return true;
+		return hr;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void DrawImage(ID2D1RenderTarget* pD2D1RenderTarget, UINT32 argb)
+	{
+		pD2D1RenderTarget->Clear(
+			D2D1::ColorF( // using overload ColorF(UINT32 rgb, float a)
+				argb & 0xFFFFFF, // Lower 24 bits are 0xRRGGBB
+				((float)(argb >> 24 & 0xFF)) / 0xFF // Upper 8 bits are 0xAA - bit shift, cast to float, then divide by 255 (0xFF)
+			));
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
@@ -138,10 +155,8 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		bool DrawRectangleBorder(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth)
+		void DrawRectangleBorder(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth)
 	{
-		pD2D1RenderTarget->BeginDraw();
-
 		pD2D1RenderTarget->DrawRectangle(
 			D2D1::RectF(
 				startX + (lineWidth / 2),
@@ -152,21 +167,11 @@ namespace Direct2DWrapper
 			pD2D1SolidColorBrush,
 			lineWidth
 		);
-
-		HRESULT hr = pD2D1RenderTarget->EndDraw();
-		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET)
-		{
-			SafeRelease(&pD2D1RenderTarget);
-			return false;
-		}
-		return true;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		bool DrawRectangle(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY)
+		void DrawRectangle(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY)
 	{
-		pD2D1RenderTarget->BeginDraw();
-
 		pD2D1RenderTarget->FillRectangle(
 			D2D1::RectF(
 				startX,
@@ -176,14 +181,67 @@ namespace Direct2DWrapper
 			),
 			pD2D1SolidColorBrush
 		);
+	}
 
-		HRESULT hr = pD2D1RenderTarget->EndDraw();
-		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET)
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT PushEllipseLayer(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, float centerX, float centerY, float radiusX, float radiusY)
+	{
+		ID2D1Factory* pD2D1Factory = NULL;
+		ID2D1DeviceContext* pD2D1DeviceContext = NULL;
+		ID2D1EllipseGeometry* ellipseMask = NULL;
+
+		pD2D1RenderTarget->GetFactory(&pD2D1Factory);
+		pD2D1RenderTarget->QueryInterface(
+			__uuidof(ID2D1DeviceContext),
+			reinterpret_cast<void**>(&pD2D1DeviceContext)
+		);
+
+		D2D1_POINT_2F centerPoint = D2D1::Point2F(
+			centerX,
+			centerY
+		);
+
+		HRESULT hr = pD2D1Factory->CreateEllipseGeometry(
+			D2D1::Ellipse(
+				centerPoint,
+				radiusX,
+				radiusY
+			),
+			&ellipseMask
+		);
+
+		if (SUCCEEDED(hr))
 		{
-			SafeRelease(&pD2D1RenderTarget);
-			return false;
+			D2D1_LAYER_PARAMETERS1 layerParams = D2D1::LayerParameters1(
+				D2D1::RectF(
+					centerX - radiusX,
+					centerY - radiusY,
+					centerX + radiusX,
+					centerY + radiusY
+				),
+				ellipseMask,
+				D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
+				D2D1::IdentityMatrix(),
+				1.0f,
+				pD2D1SolidColorBrush,
+				D2D1_LAYER_OPTIONS1_NONE
+			);
+			pD2D1RenderTarget->BeginDraw();
+			pD2D1DeviceContext->PushLayer(layerParams, NULL);
 		}
-		return true;
+
+		SafeRelease(&ellipseMask);
+		pD2D1DeviceContext->Release();
+		pD2D1Factory->Release();
+		return hr;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+	HRESULT PopLayer(ID2D1RenderTarget* pD2D1RenderTarget)
+	{
+		pD2D1RenderTarget->PopLayer();
+		HRESULT hr = pD2D1RenderTarget->EndDraw();
+		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
@@ -229,7 +287,7 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			hr = pD2D1RenderTarget->CreateBitmapFromWicBitmap(
+			hr = pD2D1DeviceContext->CreateBitmapFromWicBitmap(
 				pWICFormatConverter,
 				NULL,
 				&pD2D1Bitmap
@@ -270,7 +328,6 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			pD2D1RenderTarget->BeginDraw();
 			pD2D1DeviceContext->DrawImage(
 				pBitmapSourceEffect,
 				D2D1::Point2F(startX, startY),
@@ -283,7 +340,6 @@ namespace Direct2DWrapper
 				D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC,
 				D2D1_COMPOSITE_MODE_SOURCE_OVER
 			);
-			hr = pD2D1RenderTarget->EndDraw();
 		}
 		SafeRelease(&pBitmapSourceEffect);
 		SafeRelease(&pD2D1Bitmap);
@@ -340,7 +396,6 @@ namespace Direct2DWrapper
 				startX + width,
 				startY + height
 			);
-			pD2D1RenderTarget->BeginDraw();
 			UINT32 len = wcslen(text);
 			pD2D1DeviceContext->DrawTextW(
 				text,
@@ -350,7 +405,6 @@ namespace Direct2DWrapper
 				pD2D1SolidColorBrush,
 				D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT
 			);
-			hr = pD2D1RenderTarget->EndDraw();
 		}
 		SafeRelease(&pDWriteTextFormat2);
 		SafeRelease(&pDWriteFactory);

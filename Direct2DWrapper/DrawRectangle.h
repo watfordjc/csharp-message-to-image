@@ -55,6 +55,9 @@ namespace Direct2DWrapper
 		void DrawRectangleBorder(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth);
 
 	DIRECT2DWRAPPER_C_FUNCTION
+		void DrawLine(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth);
+
+	DIRECT2DWRAPPER_C_FUNCTION
 		void DrawRectangle(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY);
 
 	DIRECT2DWRAPPER_C_FUNCTION
@@ -67,7 +70,7 @@ namespace Direct2DWrapper
 		HRESULT DrawImageFromFilename(IWICImagingFactory* pWICImagingFactory, ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR filename, int startX, int startY, int width, int height);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT DrawTextFromString(ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR text, int startX, int startY, int width, int height, bool justifyCentered, PCWSTR fontName, float fontSize, PCWSTR localeName, ID2D1SolidColorBrush* pD2D1SolidColorBrush);
+		double DrawTextFromString(ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR text, int startX, int startY, int width, int height, bool justifyCentered, PCWSTR fontName, float fontSize, int fontWeight, PCWSTR localeName, ID2D1SolidColorBrush* pD2D1SolidColorBrush);
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		void DrawImage(ID2D1RenderTarget* pD2D1RenderTarget, UINT32 argb);

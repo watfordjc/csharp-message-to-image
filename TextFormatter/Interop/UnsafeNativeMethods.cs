@@ -122,6 +122,19 @@ namespace TextFormatter.Interop
         internal extern static void ReleaseSolidColorBrush(IntPtr pD2D1SolidColorBrush);
 
         /// <summary>
+        /// Draw a line
+        /// </summary>
+        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the stroke colour</param>
+        /// <param name="startX">The x coordinate of the first pixel</param>
+        /// <param name="startY">The y coordinate of the first pixel</param>
+        /// <param name="lengthX">The x coordinate of the second pixel</param>
+        /// <param name="lengthY">The y coordinate of the second pixel</param>
+        /// <param name="lineWidth">The brush thickness (line width) of the line drawn</param>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
+        internal extern static void DrawLine(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth);
+
+        /// <summary>
         /// Draw a rectangle border
         /// </summary>
         /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
@@ -195,9 +208,9 @@ namespace TextFormatter.Interop
         /// <param name="fontSize">Desire text size in DIPs</param>
         /// <param name="localeName">A string containing the locale name, such as "en-GB"</param>
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the text colour</param>
-        /// <returns>0 if successful, otherwise throws an exception</returns>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static int DrawTextFromString(IntPtr pD2D1RenderTarget, String text, int startX, int startY, int width, int height, bool justifyCentered, String fontName, float fontSize, String localeName, IntPtr pD2D1SolidColorBrush);
+        /// <returns>The y coordinate of the bottom of the last line of text drawn if successful, otherwise -1</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal extern static double DrawTextFromString(IntPtr pD2D1RenderTarget, String text, int startX, int startY, int width, int height, bool justifyCentered, String fontName, float fontSize, int fontWeight, String localeName, IntPtr pD2D1SolidColorBrush);
 
         /// <summary>
         /// Save a drawn image

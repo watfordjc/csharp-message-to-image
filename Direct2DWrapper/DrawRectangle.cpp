@@ -170,6 +170,17 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
+	void DrawLine(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth)
+	{
+		pD2D1RenderTarget->DrawLine(
+			D2D1::Point2F(startX, startY),
+			D2D1::Point2F(stopX, stopY),
+			pD2D1SolidColorBrush,
+			lineWidth
+		);
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
 		void DrawRectangle(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY)
 	{
 		pD2D1RenderTarget->FillRectangle(
@@ -351,29 +362,44 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT DrawTextFromString(ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR text, int startX, int startY, int width, int height, bool justifyCentered, PCWSTR fontName, float fontSize, PCWSTR localeName, ID2D1SolidColorBrush* pD2D1SolidColorBrush)
+		double DrawTextFromString(ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR text, int startX, int startY, int width, int height, bool justifyCentered, PCWSTR fontName, float fontSize, int fontWeight, PCWSTR localeName, ID2D1SolidColorBrush* pD2D1SolidColorBrush)
 	{
 		ID2D1DeviceContext4* pD2D1DeviceContext = NULL;
 		IDWriteFactory2* pDWriteFactory = NULL;
 		IDWriteTextFormat2* pDWriteTextFormat2 = NULL;
+		IDWriteTextLayout* pDWriteTextLayout = NULL;
+		double lastDrawnYPixel = -1;
 
 		pD2D1RenderTarget->QueryInterface(
 			__uuidof(ID2D1DeviceContext),
 			reinterpret_cast<void**>(&pD2D1DeviceContext)
 		);
 
+		UINT32 len = wcslen(text);
+
 		HRESULT hr = DWriteCreateFactory(
 			DWRITE_FACTORY_TYPE_SHARED,
 			__uuidof(IDWriteFactory),
 			reinterpret_cast<IUnknown**>(&pDWriteFactory)
 		);
+
+		DWRITE_FONT_WEIGHT weight = DWRITE_FONT_WEIGHT_NORMAL;
+		if (fontWeight == 700) {
+			weight = DWRITE_FONT_WEIGHT_BOLD;
+		}
+		else if (fontWeight == 600) {
+			weight = DWRITE_FONT_WEIGHT_SEMI_BOLD;
+		}
+		else if (fontWeight == 500) {
+			weight = DWRITE_FONT_WEIGHT_MEDIUM;
+		}
 		if (SUCCEEDED(hr))
 		{
 			IDWriteTextFormat* pDWriteTextFormat = NULL;
 			hr = pDWriteFactory->CreateTextFormat(
 				fontName,
 				NULL,
-				DWRITE_FONT_WEIGHT_NORMAL,
+				weight,
 				DWRITE_FONT_STYLE_NORMAL,
 				DWRITE_FONT_STRETCH_NORMAL,
 				fontSize,
@@ -390,18 +416,24 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			D2D1_RECT_F layoutRectangle = D2D1::RectF(
-				startX,
-				startY,
-				startX + width,
-				startY + height
-			);
-			UINT32 len = wcslen(text);
-			pD2D1DeviceContext->DrawTextW(
+			hr = pDWriteFactory->CreateTextLayout(
 				text,
 				len,
 				pDWriteTextFormat2,
-				&layoutRectangle,
+				width,
+				height,
+				&pDWriteTextLayout
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			DWRITE_TEXT_METRICS1 metrics;
+			hr = pDWriteTextLayout->GetMetrics(&metrics);
+			lastDrawnYPixel = startY + (double)metrics.top + (double)metrics.height;
+
+			pD2D1DeviceContext->DrawTextLayout(
+				D2D1::Point2F(startX, startY),
+				pDWriteTextLayout,
 				pD2D1SolidColorBrush,
 				D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT
 			);
@@ -409,7 +441,13 @@ namespace Direct2DWrapper
 		SafeRelease(&pDWriteTextFormat2);
 		SafeRelease(&pDWriteFactory);
 		pD2D1DeviceContext->Release();
-		return hr;
+		if (FAILED(hr))
+		{
+			return -1;
+		}
+		else {
+			return lastDrawnYPixel;
+		}
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION

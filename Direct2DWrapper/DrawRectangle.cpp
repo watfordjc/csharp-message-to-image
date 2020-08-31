@@ -22,16 +22,20 @@ namespace Direct2DWrapper
 	DIRECT2DWRAPPER_C_FUNCTION
 		ID2D1Factory* CreateD2D1Factory()
 	{
-		D2D1_FACTORY_OPTIONS factoryOptions;
-		factoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
-
 		ID2D1Factory* pD2D1Factory = NULL;
+
+		D2D1_FACTORY_OPTIONS factoryOptions;
+		//factoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 
 		HRESULT hr = D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
-			factoryOptions,
+			//factoryOptions,
 			&pD2D1Factory
 		);
+		if (FAILED(hr))
+		{
+			return NULL;
+		}
 		return pD2D1Factory;
 	}
 
@@ -53,6 +57,10 @@ namespace Direct2DWrapper
 			__uuidof(IWICImagingFactory),
 			reinterpret_cast<void**>(&pWICImagingFactory)
 		);
+		if (FAILED(hr))
+		{
+			return NULL;
+		}
 		return pWICImagingFactory;
 	}
 
@@ -63,9 +71,34 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
+		IDWriteFactory7* CreateDWriteFactory()
+	{
+		IDWriteFactory7* pDWriteFactory = NULL;
+
+		HRESULT hr = DWriteCreateFactory(
+			DWRITE_FACTORY_TYPE_SHARED,
+			__uuidof(IDWriteFactory7),
+			reinterpret_cast<IUnknown**>(&pDWriteFactory)
+		);
+		if (FAILED(hr))
+		{
+			return NULL;
+		}
+		return pDWriteFactory;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseDWriteFactory(IDWriteFactory7* pDWriteFactory)
+	{
+		SafeRelease(&pDWriteFactory);
+	}
+
+
+	DIRECT2DWRAPPER_C_FUNCTION
 		IWICBitmap* CreateWICBitmap(IWICImagingFactory* pWICImagingFactory, UINT width, UINT height)
 	{
 		IWICBitmap* pWICBitmap = NULL;
+
 		HRESULT hr = pWICImagingFactory->CreateBitmap(
 			width,
 			height,
@@ -73,6 +106,10 @@ namespace Direct2DWrapper
 			WICBitmapCacheOnLoad,
 			&pWICBitmap
 		);
+		if (FAILED(hr))
+		{
+			return NULL;
+		}
 		return pWICBitmap;
 	}
 
@@ -85,6 +122,8 @@ namespace Direct2DWrapper
 	DIRECT2DWRAPPER_C_FUNCTION
 		ID2D1RenderTarget* CreateRenderTarget(ID2D1Factory* pD2D1Factory, IWICBitmap* pWICBitmap)
 	{
+		ID2D1RenderTarget* pD2D1RenderTarget = NULL;
+
 		D2D1_RENDER_TARGET_PROPERTIES targetProperties = D2D1::RenderTargetProperties();
 		D2D1_PIXEL_FORMAT desiredFormat = D2D1::PixelFormat(
 			DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -92,12 +131,15 @@ namespace Direct2DWrapper
 		);
 		targetProperties.pixelFormat = desiredFormat;
 
-		ID2D1RenderTarget* pD2D1RenderTarget = NULL;
 		HRESULT hr = pD2D1Factory->CreateWicBitmapRenderTarget(
 			pWICBitmap,
 			targetProperties,
 			&pD2D1RenderTarget
 		);
+		if (FAILED(hr))
+		{
+			return NULL;
+		}
 		return pD2D1RenderTarget;
 	}
 
@@ -114,7 +156,7 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-	HRESULT EndDraw(ID2D1RenderTarget* pD2D1RenderTarget)
+		HRESULT EndDraw(ID2D1RenderTarget* pD2D1RenderTarget)
 	{
 		HRESULT hr = pD2D1RenderTarget->EndDraw();
 		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET)
@@ -138,6 +180,7 @@ namespace Direct2DWrapper
 		ID2D1SolidColorBrush* CreateSolidColorBrush(ID2D1RenderTarget* pD2D1RenderTarget, UINT32 argb)
 	{
 		ID2D1SolidColorBrush* pD2D1SolidColorBrush = NULL;
+
 		HRESULT hr = pD2D1RenderTarget->CreateSolidColorBrush(
 			D2D1::ColorF(D2D1::ColorF( // using overload ColorF(UINT32 rgb, float a)
 				argb & 0xFFFFFF, // Lower 24 bits are 0xRRGGBB
@@ -145,6 +188,10 @@ namespace Direct2DWrapper
 			)),
 			&pD2D1SolidColorBrush
 		);
+		if (FAILED(hr))
+		{
+			return NULL;
+		}
 		return pD2D1SolidColorBrush;
 	}
 
@@ -170,7 +217,7 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-	void DrawLine(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth)
+		void DrawLine(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth)
 	{
 		pD2D1RenderTarget->DrawLine(
 			D2D1::Point2F(startX, startY),
@@ -201,26 +248,27 @@ namespace Direct2DWrapper
 		ID2D1DeviceContext* pD2D1DeviceContext = NULL;
 		ID2D1EllipseGeometry* ellipseMask = NULL;
 
-		pD2D1RenderTarget->GetFactory(&pD2D1Factory);
-		pD2D1RenderTarget->QueryInterface(
-			__uuidof(ID2D1DeviceContext),
-			reinterpret_cast<void**>(&pD2D1DeviceContext)
-		);
-
 		D2D1_POINT_2F centerPoint = D2D1::Point2F(
 			centerX,
 			centerY
 		);
 
-		HRESULT hr = pD2D1Factory->CreateEllipseGeometry(
-			D2D1::Ellipse(
-				centerPoint,
-				radiusX,
-				radiusY
-			),
-			&ellipseMask
+		pD2D1RenderTarget->GetFactory(&pD2D1Factory);
+		HRESULT hr = pD2D1RenderTarget->QueryInterface(
+			__uuidof(ID2D1DeviceContext),
+			reinterpret_cast<void**>(&pD2D1DeviceContext)
 		);
-
+		if (SUCCEEDED(hr))
+		{
+			hr = pD2D1Factory->CreateEllipseGeometry(
+				D2D1::Ellipse(
+					centerPoint,
+					radiusX,
+					radiusY
+				),
+				&ellipseMask
+			);
+		}
 		if (SUCCEEDED(hr))
 		{
 			D2D1_LAYER_PARAMETERS1 layerParams = D2D1::LayerParameters1(
@@ -248,7 +296,7 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-	HRESULT PopLayer(ID2D1RenderTarget* pD2D1RenderTarget)
+		HRESULT PopLayer(ID2D1RenderTarget* pD2D1RenderTarget)
 	{
 		pD2D1RenderTarget->PopLayer();
 		HRESULT hr = pD2D1RenderTarget->EndDraw();
@@ -265,18 +313,20 @@ namespace Direct2DWrapper
 		ID2D1Effect* pBitmapSourceEffect = NULL;
 		ID2D1DeviceContext* pD2D1DeviceContext = NULL;
 
-		pD2D1RenderTarget->QueryInterface(
+		HRESULT hr = pD2D1RenderTarget->QueryInterface(
 			__uuidof(ID2D1DeviceContext),
 			reinterpret_cast<void**>(&pD2D1DeviceContext)
 		);
-
-		HRESULT hr = pWICImagingFactory->CreateDecoderFromFilename(
-			filename,
-			NULL,
-			GENERIC_READ,
-			WICDecodeMetadataCacheOnLoad,
-			&pWICBitmapDecoder
-		);
+		if (SUCCEEDED(hr))
+		{
+			hr = pWICImagingFactory->CreateDecoderFromFilename(
+				filename,
+				NULL,
+				GENERIC_READ,
+				WICDecodeMetadataCacheOnLoad,
+				&pWICBitmapDecoder
+			);
+		}
 		if (SUCCEEDED(hr))
 		{
 			hr = pWICBitmapDecoder->GetFrame(0, &pWICBitmapFrameDecode);
@@ -361,26 +411,44 @@ namespace Direct2DWrapper
 		return hr;
 	}
 
+	struct TextLayoutResult {
+		IDWriteTextLayout* pDWriteTextLayout;
+		int lineCount; // Lines of text
+		int top; // Top edge of text block from edge of canvas
+		int left; // Left edge of text block from edge of canvas
+		double height; // Height of text block
+		double width; // Width of text block
+		float lineSpacing; // Line-spacing for font used
+		float baseline; // Baseline for font used
+		double lineHeight;
+		double lineHeightEm;
+	};
+
 	DIRECT2DWRAPPER_C_FUNCTION
-		double DrawTextFromString(ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR text, int startX, int startY, int width, int height, bool justifyCentered, PCWSTR fontName, float fontSize, int fontWeight, PCWSTR localeName, ID2D1SolidColorBrush* pD2D1SolidColorBrush)
+		HRESULT CreateTextLayoutFromString(
+			IDWriteFactory7* pDWriteFactory,
+			ID2D1RenderTarget* pD2D1RenderTarget,
+			PCWSTR text,
+			int startX,
+			int startY,
+			int width,
+			int height,
+			bool justifyCentered,
+			PCWSTR fontName,
+			float fontSize,
+			int fontWeight,
+			PCWSTR localeName,
+			struct TextLayoutResult* textLayoutResult
+		)
 	{
 		ID2D1DeviceContext4* pD2D1DeviceContext = NULL;
-		IDWriteFactory2* pDWriteFactory = NULL;
-		IDWriteTextFormat2* pDWriteTextFormat2 = NULL;
-		IDWriteTextLayout* pDWriteTextLayout = NULL;
-		double lastDrawnYPixel = -1;
+		IDWriteTextFormat3* pDWriteTextFormat3 = NULL;
+		UINT32 len = wcslen(text);
+		DWRITE_TEXT_METRICS1 metrics;
 
-		pD2D1RenderTarget->QueryInterface(
+		HRESULT hr = pD2D1RenderTarget->QueryInterface(
 			__uuidof(ID2D1DeviceContext),
 			reinterpret_cast<void**>(&pD2D1DeviceContext)
-		);
-
-		UINT32 len = wcslen(text);
-
-		HRESULT hr = DWriteCreateFactory(
-			DWRITE_FACTORY_TYPE_SHARED,
-			__uuidof(IDWriteFactory),
-			reinterpret_cast<IUnknown**>(&pDWriteFactory)
 		);
 
 		DWRITE_FONT_WEIGHT weight = DWRITE_FONT_WEIGHT_NORMAL;
@@ -406,48 +474,83 @@ namespace Direct2DWrapper
 				localeName,
 				&pDWriteTextFormat
 			);
-			pDWriteTextFormat2 = (IDWriteTextFormat2*)pDWriteTextFormat;
+			pDWriteTextFormat3 = (IDWriteTextFormat3*)pDWriteTextFormat;
 		}
 		if (SUCCEEDED(hr) && justifyCentered)
 		{
-			hr = pDWriteTextFormat2->SetTextAlignment(
+			hr = pDWriteTextFormat3->SetTextAlignment(
 				DWRITE_TEXT_ALIGNMENT_CENTER
 			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			textLayoutResult->lineSpacing = fontSize * 1.3f;
+			textLayoutResult->baseline = fontSize * 0.8f;
+			hr = pDWriteTextFormat3->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_DEFAULT, textLayoutResult->lineSpacing, textLayoutResult->baseline);
 		}
 		if (SUCCEEDED(hr))
 		{
 			hr = pDWriteFactory->CreateTextLayout(
 				text,
 				len,
-				pDWriteTextFormat2,
+				pDWriteTextFormat3,
 				width,
 				height,
-				&pDWriteTextLayout
+				&textLayoutResult->pDWriteTextLayout
 			);
 		}
 		if (SUCCEEDED(hr))
 		{
-			DWRITE_TEXT_METRICS1 metrics;
-			hr = pDWriteTextLayout->GetMetrics(&metrics);
-			lastDrawnYPixel = startY + (double)metrics.top + (double)metrics.height;
+			hr = textLayoutResult->pDWriteTextLayout->GetMetrics(&metrics);
+			textLayoutResult->lineCount = metrics.lineCount;
+		}
+		if (SUCCEEDED(hr))
+		{
+			if (textLayoutResult->lineCount == 1)
+			{
+				hr = pDWriteTextFormat3->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+			}
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = textLayoutResult->pDWriteTextLayout->GetMetrics(&metrics);
+			textLayoutResult->lineCount = metrics.lineCount;
+			textLayoutResult->top = startY + (double)metrics.top;
+			textLayoutResult->height = max(metrics.heightIncludingTrailingWhitespace, 0) > 0 ? (double)metrics.heightIncludingTrailingWhitespace : (double)metrics.height;
+			textLayoutResult->left = startX + (double)metrics.left;
+			textLayoutResult->width = max(metrics.widthIncludingTrailingWhitespace, 0) > 0 ? (double)metrics.widthIncludingTrailingWhitespace : (double)metrics.width;
+		}
+		SafeRelease(&pDWriteTextFormat3);
+		pD2D1DeviceContext->Release();
+		return hr;
+	}
 
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT DrawTextLayout(ID2D1RenderTarget* pD2D1RenderTarget, struct TextLayoutResult* textLayoutResult, int startX, int startY, ID2D1SolidColorBrush* pD2D1SolidColorBrush)
+	{
+		ID2D1DeviceContext4* pD2D1DeviceContext = NULL;
+
+		HRESULT hr = pD2D1RenderTarget->QueryInterface(
+			__uuidof(ID2D1DeviceContext),
+			reinterpret_cast<void**>(&pD2D1DeviceContext)
+		);
+		if (SUCCEEDED(hr))
+		{
 			pD2D1DeviceContext->DrawTextLayout(
 				D2D1::Point2F(startX, startY),
-				pDWriteTextLayout,
+				textLayoutResult->pDWriteTextLayout,
 				pD2D1SolidColorBrush,
 				D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT
 			);
+			pD2D1DeviceContext->Release();
 		}
-		SafeRelease(&pDWriteTextFormat2);
-		SafeRelease(&pDWriteFactory);
-		pD2D1DeviceContext->Release();
-		if (FAILED(hr))
-		{
-			return -1;
-		}
-		else {
-			return lastDrawnYPixel;
-		}
+		return hr;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseTextLayout(struct TextLayoutResult* textLayoutResult)
+	{
+		SafeRelease(&textLayoutResult->pDWriteTextLayout);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION

@@ -26,9 +26,10 @@ namespace TextFormatter
     /// </summary>
     public partial class MainWindow : Window, IDisposable
     {
-        private readonly IntPtr direct2DFactory = Interop.UnsafeNativeMethods.CreateD2D1Factory();
-        private readonly IntPtr imagingFactory = Interop.UnsafeNativeMethods.CreateImagingFactory();
-        private System.Drawing.Size canvasDimensions = new System.Drawing.Size(1280, 3408);
+        private IntPtr direct2DFactory;
+        private IntPtr directWriteFactory;
+        private IntPtr imagingFactory;
+        private System.Drawing.Size canvasDimensions;
         private IntPtr bitmap;
         private IntPtr canvas;
         private readonly Dictionary<string, IntPtr> brushes = new Dictionary<string, IntPtr>();
@@ -37,16 +38,32 @@ namespace TextFormatter
         public MainWindow()
         {
             InitializeComponent();
+            this.ContentRendered += MainWindow_ContentRendered;
             Trace.WriteLine(Interop.UnsafeNativeMethods.Add(3, 6));
+        }
 
-            bitmap = Interop.UnsafeNativeMethods.CreateWICBitmap(imagingFactory, (uint)canvasDimensions.Width, (uint)canvasDimensions.Height);
-            canvas = Interop.UnsafeNativeMethods.CreateRenderTarget(direct2DFactory, bitmap);
-            if (DrawAndSaveImage() == ReturnCode.LOST_D2D1_RENDER_TARGET)
+        private void MainWindow_ContentRendered(object sender, EventArgs e)
+        {
+            try
             {
+                canvasDimensions = new System.Drawing.Size(1280, 3408);
+                direct2DFactory = Interop.UnsafeNativeMethods.CreateD2D1Factory();
+                directWriteFactory = Interop.UnsafeNativeMethods.CreateDWriteFactory();
+                imagingFactory = Interop.UnsafeNativeMethods.CreateImagingFactory();
+                bitmap = Interop.UnsafeNativeMethods.CreateWICBitmap(imagingFactory, (uint)canvasDimensions.Width, (uint)canvasDimensions.Height);
                 canvas = Interop.UnsafeNativeMethods.CreateRenderTarget(direct2DFactory, bitmap);
+                if (DrawAndSaveImage() == ReturnCode.LOST_D2D1_RENDER_TARGET)
+                {
+                    canvas = Interop.UnsafeNativeMethods.CreateRenderTarget(direct2DFactory, bitmap);
+                }
+                Interop.UnsafeNativeMethods.ReleaseRenderTarget(canvas);
+                Interop.UnsafeNativeMethods.ReleaseWICBitmap(bitmap);
             }
-            Interop.UnsafeNativeMethods.ReleaseRenderTarget(canvas);
-            Interop.UnsafeNativeMethods.ReleaseWICBitmap(bitmap);
+            catch (COMException ce)
+            {
+                Exception ex = Marshal.GetExceptionForHR(ce.HResult);
+                Trace.WriteLine($"COMException: {ex.Message} - {ex.InnerException?.Message}");
+            }
         }
 
         private enum ReturnCode
@@ -67,16 +84,26 @@ namespace TextFormatter
 
         private void ReleaseBrushes()
         {
-            foreach(KeyValuePair<string, IntPtr> entry in brushes)
+            foreach (KeyValuePair<string, IntPtr> entry in brushes)
             {
                 Interop.UnsafeNativeMethods.ReleaseSolidColorBrush(entry.Value);
             }
             brushes.Clear();
         }
 
+        private void DrawText(Interop.TextLayoutResult textLayout, int startX, int startY, IntPtr colorBrush, bool releaseLayout)
+        {
+            Interop.UnsafeNativeMethods.DrawTextLayout(canvas, textLayout, startX, startY, colorBrush);
+            // Memory leak: following code commented due to COMException, need to investigate
+            //if (releaseLayout)
+            //{
+            //    Interop.UnsafeNativeMethods.ReleaseTextLayout(textLayout);
+            //}
+        }
+
         private ReturnCode DrawAndSaveImage()
         {
-            Exception ex1;
+            Exception ex1, ex2;
 
             #region Draw Image
             Interop.UnsafeNativeMethods.BeginDraw(canvas);
@@ -105,11 +132,19 @@ namespace TextFormatter
 
             #region Draw heading, subheading, and separator
             Interop.UnsafeNativeMethods.BeginDraw(canvas);
-            //Canvas is in pixels, fonts are in DIPs
-            double pixelMultiplier = 96.0 / 72.0;
             double startY = 40;
-            startY = Interop.UnsafeNativeMethods.DrawTextFromString(canvas, "UK Tweets", 40, (int)Math.Round(startY), canvasDimensions.Width - 80, canvasDimensions.Height - (int)Math.Round(startY), true, "Noto Sans", 104.0f, 700, "en-GB", brushes["textBrush"]);
-            startY = Interop.UnsafeNativeMethods.DrawTextFromString(canvas, "Tweets and Retweets from UK Resiliency Twitter Accounts", 40, (int)(Math.Round(startY)), canvasDimensions.Width - 80, canvasDimensions.Height - (int)Math.Round(startY), true, "Noto Sans", 74.0f, 500, "en-GB", brushes["textBrush"]);
+            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(directWriteFactory, canvas, "UK Tweets", 40, (int)Math.Round(startY), canvasDimensions.Width - 80, canvasDimensions.Height - (int)Math.Round(startY), true, "Noto Sans", 104.0f, 700, "en-GB", out Interop.TextLayoutResult currentTextResult));
+            if (ex1 == null)
+            {
+                DrawText(currentTextResult, 40, (int)Math.Round(startY), brushes["textBrush"], true);
+                startY += currentTextResult.height;
+            }
+            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(directWriteFactory, canvas, "Tweets and Retweets from UK Resiliency Twitter Accounts", 40, (int)(Math.Round(startY)), canvasDimensions.Width - 80, canvasDimensions.Height - (int)Math.Round(startY), true, "Noto Sans", 74.0f, 500, "en-GB", out currentTextResult));
+            if (ex1 == null)
+            {
+                DrawText(currentTextResult, 40, (int)Math.Round(startY), brushes["textBrush"], true);
+                startY += currentTextResult.height;
+            }
             startY += 60;
             Interop.UnsafeNativeMethods.DrawLine(canvas, brushes["textBrush"], 40, (int)(Math.Round(startY)), canvasDimensions.Width - 40, (int)(Math.Round(startY)), 8.0f);
             startY += 90;
@@ -152,11 +187,16 @@ namespace TextFormatter
                 X = (centredTopLeft.X + borderWidth) + (rectangleDimensions.Width / 2),
                 Y = (centredTopLeft.Y + borderWidth) + (rectangleDimensions.Height / 2)
             };
-            Interop.UnsafeNativeMethods.PushEllipseLayer(canvas, IntPtr.Zero, centerPointForEllipse.X, centerPointForEllipse.Y, rectangleDimensions.Width / 2, rectangleDimensions.Height / 2);
+            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.PushEllipseLayer(canvas, IntPtr.Zero, centerPointForEllipse.X, centerPointForEllipse.Y, rectangleDimensions.Width / 2, rectangleDimensions.Height / 2));
+            if (ex1 != null)
+            {
+                ReleaseBrushes();
+                return ReturnCode.LOST_D2D1_RENDER_TARGET;
+            }
             #endregion
             #region Draw a profile image
-            //string profileImageFilename = @"C:\JohnDocs\tmp2\Computing\Web Sites\image manipulation\shaving_250px_square.png";
-            string profileImageFilename = @"G:\Program Files (x86)\mIRC\twimg\HertsFRSControl.jpg";
+            string profileImageFilename = @"C:\JohnDocs\tmp2\Computing\Web Sites\image manipulation\shaving_250px_square.png";
+            //string profileImageFilename = @"G:\Program Files (x86)\mIRC\twimg\DerbyshireFRS.jpg";
             try
             {
                 Interop.UnsafeNativeMethods.DrawImageFromFilename(imagingFactory, canvas, profileImageFilename, centredTopLeft.X + borderWidth, centredTopLeft.Y + borderWidth, rectangleDimensions.Width, rectangleDimensions.Height);
@@ -164,6 +204,10 @@ namespace TextFormatter
             catch (FileNotFoundException e)
             {
                 Trace.WriteLine($"Error reading file {profileImageFilename}: {e.Message} - {e.InnerException?.Message}");
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"And error occurred reading file {profileImageFilename}: {ex.Message} - {ex.InnerException?.Message}");
             }
             #endregion
             #region Draw an emoji instead of a profile image
@@ -181,12 +225,29 @@ namespace TextFormatter
             #region Draw display name and username
             Interop.UnsafeNativeMethods.BeginDraw(canvas);
             //Canvas is in pixels, fonts are in DIPs
-            startY = centredTopLeft.Y - 6.0f;
-            startY = Interop.UnsafeNativeMethods.DrawTextFromString(canvas, "Herts Fire Control", (centredTopLeft.X * 2) + rectangleDimensions.Width, (int)Math.Round(startY), canvasDimensions.Width - (centredTopLeft.X * 2) - rectangleDimensions.Width, canvasDimensions.Height - (int)Math.Round(startY), false, "Noto Sans", 90.0f, 700, "en-GB", brushes["textBrush"]);
-            startY -= 6.0f;
-            startY = Interop.UnsafeNativeMethods.DrawTextFromString(canvas, "@HertsFRSControl", (centredTopLeft.X * 2) + rectangleDimensions.Width, (int)Math.Round(startY), canvasDimensions.Width - (centredTopLeft.X * 2) - rectangleDimensions.Width, canvasDimensions.Height - (int)Math.Round(startY), false, "Noto Sans", 90.0f, 500, "en-GB", brushes["textBrush"]);
+            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(directWriteFactory, canvas, "John Cook", (centredTopLeft.X * 2) + rectangleDimensions.Width, centredTopLeft.Y + borderWidth, canvasDimensions.Width - (centredTopLeft.X * 2) - rectangleDimensions.Width, (rectangleDimensions.Height - borderWidth) / 2, false, "Noto Sans", 88.0f, 700, "en-GB", out Interop.TextLayoutResult displayNameTextLayout));
+            ex2 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(directWriteFactory, canvas, "@WatfordJC", (centredTopLeft.X * 2) + rectangleDimensions.Width, centredTopLeft.Y + borderWidth, canvasDimensions.Width - (centredTopLeft.X * 2) - rectangleDimensions.Width, (rectangleDimensions.Height - borderWidth) / 2, false, "Noto Sans", 88.0f, 500, "en-GB", out Interop.TextLayoutResult usernameTextLayout));
+            if (ex1 == null && ex2 == null)
+            {
+                if (rectangleDimensions.Height / 2 >= displayNameTextLayout.height)
+                {
+                    usernameTextLayout.top = centredTopLeft.Y + borderWidth + (rectangleDimensions.Height / 2);
+                }
+                else
+                {
+                    usernameTextLayout.top += (int)displayNameTextLayout.height;
+                }
+                DrawText(displayNameTextLayout, (centredTopLeft.X * 2) + rectangleDimensions.Width, displayNameTextLayout.top, brushes["textBrush"], true);
+                DrawText(usernameTextLayout, (centredTopLeft.X * 2) + rectangleDimensions.Width, usernameTextLayout.top, brushes["textBrush"], true);
+                startY = Math.Max(centredTopLeft.Y + borderWidth + rectangleDimensions.Height, centredTopLeft.Y + borderWidth + (int)Math.Round(displayNameTextLayout.height + usernameTextLayout.height));
+            }
             startY += 90;
-            startY = Interop.UnsafeNativeMethods.DrawTextFromString(canvas, "Blue watch are getting ready to handover to green watch for the night. We will be back at 20:00 tomorrow night. Stay safe 🚒😀🚒", centredTopLeft.X, (int)Math.Round(startY), canvasDimensions.Width - (centredTopLeft.X * 2), canvasDimensions.Height - (int)Math.Round(startY), false, "Segoe UI Emoji", 90.0f, 700, "en-GB", brushes["textBrush"]);
+            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(directWriteFactory, canvas, "File -> New -> 1280x3600 -> Save As -> Something.PNG. You'd think creating a blank PNG in Direct2D wouldn't involve that much learning, but it is day 3 and I think I'm now drawing a blank canvas with a white background off screen. A rectangle in 6 steps sounded way too easy.", centredTopLeft.X, (int)Math.Round(startY), canvasDimensions.Width - (centredTopLeft.X * 2), canvasDimensions.Height - (int)Math.Round(startY), false, "Segoe UI Emoji", 90.0f, 700, "en-GB", out currentTextResult));
+            if (ex1 == null)
+            {
+                DrawText(currentTextResult, centredTopLeft.X, (int)Math.Round(startY), brushes["textBrush"], true);
+                startY += currentTextResult.height;
+            }
             ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(canvas));
             if (ex1 != null)
             {
@@ -206,24 +267,58 @@ namespace TextFormatter
             {
                 Trace.WriteLine($"Error reading file {twitterLogoFilename}: {e.Message} - {e.InnerException?.Message}");
             }
-            startY = Interop.UnsafeNativeMethods.DrawTextFromString(canvas, "Today, 19:33 UTC+1", centredTopLeft.X + rectangleDimensions.Width, (int)Math.Round(startY) + 60, canvasDimensions.Width - (centredTopLeft.X * 2), canvasDimensions.Height - (int)Math.Round(startY), false, "Noto Sans", (float)(rectangleDimensions.Height / pixelMultiplier / 2.5), 700, "en-GB", brushes["textBrush"]);
-            Interop.UnsafeNativeMethods.EndDraw(canvas);
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"An error occurred reading file {profileImageFilename}: {ex.Message} - {ex.InnerException?.Message}");
+            }
+            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(directWriteFactory, canvas, "August 27th 2020", centredTopLeft.X + rectangleDimensions.Width, (int)Math.Round(startY), canvasDimensions.Width - (centredTopLeft.X * 2), rectangleDimensions.Height, false, "Noto Sans", (float)(rectangleDimensions.Height / 3), 700, "en-GB", out currentTextResult));
+            if (ex1 == null)
+            {
+                if (currentTextResult.height < rectangleDimensions.Height)
+                {
+                    currentTextResult.top = (int)(startY + ((rectangleDimensions.Height - currentTextResult.height) / 2));
+                }
+                DrawText(currentTextResult, centredTopLeft.X + rectangleDimensions.Width, currentTextResult.top, brushes["textBrush"], true);
+                startY += Math.Max(currentTextResult.height, rectangleDimensions.Height);
+            }
+            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(canvas));
+            if (ex1 != null)
+            {
+                return ReturnCode.LOST_D2D1_RENDER_TARGET;
+            }
             #endregion
 
             #region Draw Retweet logo and Retweeter
             Interop.UnsafeNativeMethods.BeginDraw(canvas);
-            startY += 60;
             string twitterRetweetLogoFilename = @"C:/Users/John/Pictures/Twitch/Twitter_Retweet.png";
+            startY += 50;
             try
             {
-                Interop.UnsafeNativeMethods.DrawImageFromFilename(imagingFactory, canvas, twitterRetweetLogoFilename, centredTopLeft.X + borderWidth + 50, (int)Math.Round(startY) + 50, rectangleDimensions.Width - 100, rectangleDimensions.Height - 100);
+                Interop.UnsafeNativeMethods.DrawImageFromFilename(imagingFactory, canvas, twitterRetweetLogoFilename, centredTopLeft.X + borderWidth + 50, (int)Math.Round(startY), rectangleDimensions.Width - 100, rectangleDimensions.Height - 100);
             }
             catch (FileNotFoundException e)
             {
                 Trace.WriteLine($"Error reading file {twitterRetweetLogoFilename}: {e.Message} - {e.InnerException?.Message}");
             }
-            startY = Interop.UnsafeNativeMethods.DrawTextFromString(canvas, "Nobody", centredTopLeft.X + rectangleDimensions.Width, (int)Math.Round(startY) + 60, canvasDimensions.Width - (centredTopLeft.X * 2), canvasDimensions.Height - (int)Math.Round(startY), false, "Noto Sans", (float)(rectangleDimensions.Height / pixelMultiplier / 2.5), 700, "en-GB", brushes["textBrush"]);
-            Interop.UnsafeNativeMethods.EndDraw(canvas);
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"An error occurred reading file {profileImageFilename}: {ex.Message} - {ex.InnerException?.Message}");
+            }
+            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(directWriteFactory, canvas, "Nobody", centredTopLeft.X + rectangleDimensions.Width, (int)Math.Round(startY) + 60, canvasDimensions.Width - (centredTopLeft.X * 2), canvasDimensions.Height - (int)Math.Round(startY), false, "Noto Sans", (float)(rectangleDimensions.Height / 3), 700, "en-GB", out currentTextResult));
+            if (ex1 == null)
+            {
+                if (currentTextResult.height < rectangleDimensions.Height - 100)
+                {
+                    currentTextResult.top = (int)(startY + ((rectangleDimensions.Height - 100 - currentTextResult.height) / 2));
+                }
+                DrawText(currentTextResult, centredTopLeft.X + rectangleDimensions.Width, currentTextResult.top, brushes["textBrush"], true);
+                startY += Math.Max(currentTextResult.height, rectangleDimensions.Height);
+            }
+            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(canvas));
+            if (ex1 != null)
+            {
+                return ReturnCode.LOST_D2D1_RENDER_TARGET;
+            }
             #endregion
 
             #region Free the brushes
@@ -268,6 +363,7 @@ namespace TextFormatter
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                Interop.UnsafeNativeMethods.ReleaseDWriteFactory(directWriteFactory);
                 Interop.UnsafeNativeMethods.ReleaseImagingFactory(imagingFactory);
                 Interop.UnsafeNativeMethods.ReleaseD2D1Factory(direct2DFactory);
                 // TODO: set large fields to null

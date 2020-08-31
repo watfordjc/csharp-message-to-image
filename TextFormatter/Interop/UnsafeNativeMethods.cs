@@ -50,6 +50,20 @@ namespace TextFormatter.Interop
         internal static extern void ReleaseImagingFactory(IntPtr pWICImagingFactory);
 
         /// <summary>
+        /// Create an IDWriteFactory7
+        /// </summary>
+        /// <returns>A pointer to an IDWriteFactory7</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr CreateDWriteFactory();
+
+        /// <summary>
+        /// Free an IDWriteFactory7
+        /// </summary>
+        /// <param name="pDWriteFactory">A pointer to the IDWriteFactory7 to be freed</param>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ReleaseDWriteFactory(IntPtr pDWriteFactory);
+
+        /// <summary>
         /// Create an IWICBitmap
         /// </summary>
         /// <param name="pWICImagingFactory">A pointer to an IWICImagingFactory</param>
@@ -195,7 +209,7 @@ namespace TextFormatter.Interop
         internal extern static int DrawImageFromFilename(IntPtr pWICImagingFactory, IntPtr pD2D1RenderTarget, String filename, int startX, int startY, int width, int height);
 
         /// <summary>
-        /// Draw a text string
+        /// Create an IDWriteTextLayout
         /// </summary>
         /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
         /// <param name="text">A string containing the text to draw</param>
@@ -206,11 +220,30 @@ namespace TextFormatter.Interop
         /// <param name="justifyCentered">True if text should be centered, False if it should be left-aligned</param>
         /// <param name="fontName">A string containing the name of the font</param>
         /// <param name="fontSize">Desire text size in DIPs</param>
+        /// <param name="fontWeight">Desired font weight (e.g. 400 for normal)</param>
         /// <param name="localeName">A string containing the locale name, such as "en-GB"</param>
+        /// <param name="textLayoutResult">A TextLayoutResult struct</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
+        internal extern static int CreateTextLayoutFromString(IntPtr pDWriteFactory, IntPtr pD2D1RenderTarget, String text, int startX, int startY, int width, int height, bool justifyCentered, String fontName, float fontSize, int fontWeight, String localeName, out TextLayoutResult textLayoutResult);
+
+        /// <summary>
+        /// Draw an IDWriteTextLayout
+        /// </summary>
+        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="textLayoutResult">A struct TextLayoutResult containing a pointer to an IDWriteTextLayout</param>
+        /// <param name="startX">The x coordinate of the top-left pixel of the text block</param>
+        /// <param name="startY">The y coordinate of the top-left pixel of the text block</param>
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the text colour</param>
-        /// <returns>The y coordinate of the bottom of the last line of text drawn if successful, otherwise -1</returns>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal extern static double DrawTextFromString(IntPtr pD2D1RenderTarget, String text, int startX, int startY, int width, int height, bool justifyCentered, String fontName, float fontSize, int fontWeight, String localeName, IntPtr pD2D1SolidColorBrush);
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
+        internal extern static void DrawTextLayout(IntPtr pD2D1RenderTarget, TextLayoutResult textLayoutResult, int startX, int startY, IntPtr pD2D1SolidColorBrush);
+
+        /// <summary>
+        /// Free an IDWriteTextLayout
+        /// </summary>
+        /// <param name="textLayoutResult">A pointer to the IDWriteTextLayout to be freed</param>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
+        internal extern static void ReleaseTextLayout(TextLayoutResult textLayoutResult);
 
         /// <summary>
         /// Save a drawn image

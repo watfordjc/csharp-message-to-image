@@ -28,6 +28,12 @@ namespace Direct2DWrapper
 		void ReleaseImagingFactory(IWICImagingFactory* pWICImagingFactory);
 
 	DIRECT2DWRAPPER_C_FUNCTION
+		IDWriteFactory7* CreateDWriteFactory();
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseDWriteFactory(IDWriteFactory7* pDWriteFactory);
+
+	DIRECT2DWRAPPER_C_FUNCTION
 		IWICBitmap* CreateWICBitmap(IWICImagingFactory* pWICImagingFactory, UINT width, UINT height);
 
 	DIRECT2DWRAPPER_C_FUNCTION
@@ -70,7 +76,13 @@ namespace Direct2DWrapper
 		HRESULT DrawImageFromFilename(IWICImagingFactory* pWICImagingFactory, ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR filename, int startX, int startY, int width, int height);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		double DrawTextFromString(ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR text, int startX, int startY, int width, int height, bool justifyCentered, PCWSTR fontName, float fontSize, int fontWeight, PCWSTR localeName, ID2D1SolidColorBrush* pD2D1SolidColorBrush);
+		HRESULT CreateTextLayoutFromString(IDWriteFactory7* pDWriteFactory, ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR text, int startX, int startY, int width, int height, bool justifyCentered, PCWSTR fontName, float fontSize, int fontWeight, PCWSTR localeName, struct TextLayoutResult* textLayoutResult);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT DrawTextLayout(ID2D1RenderTarget* pD2D1RenderTarget, struct TextLayoutResult* textLayoutResult, int startX, int startY, ID2D1SolidColorBrush* pD2D1SolidColorBrush);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseTextLayout(struct TextLayoutResult* textLayoutResult);
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		void DrawImage(ID2D1RenderTarget* pD2D1RenderTarget, UINT32 argb);

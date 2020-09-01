@@ -26,9 +26,21 @@ namespace TextFormatter
     /// </summary>
     public partial class MainWindow : Window, IDisposable
     {
+        /// <summary>
+        /// Instances of ID2D1Factory, IDWriteFactory, and IWICImagingFactory should be reused for the life of an application
+        /// </summary>
         private Interop.Direct2DPointers direct2DPointers = new Interop.Direct2DPointers();
+        /// <summary>
+        /// An IWICBitmap/ID2D1RenderTarget pair is our "canvas"
+        /// </summary>
         private Interop.Direct2DCanvas direct2DCanvas = new Interop.Direct2DCanvas();
+        /// <summary>
+        /// Temporary way of storing pointers for ID2D1SolidColorBrush - haven't worked out a suitable COM Interop way yet
+        /// </summary>
         private readonly Dictionary<string, IntPtr> brushes = new Dictionary<string, IntPtr>();
+        /// <summary>
+        /// Temporary way of storing canvas size - haven't worked out how to store in direct2DCanvas yet
+        /// </summary>
         private System.Drawing.Size canvasSize = new System.Drawing.Size();
         private bool disposedValue;
 
@@ -36,9 +48,13 @@ namespace TextFormatter
         {
             InitializeComponent();
             this.ContentRendered += MainWindow_ContentRendered;
+            // Original DLL existence test - README needs modifying if changed
             Trace.WriteLine(Interop.UnsafeNativeMethods.Add(3, 6));
         }
 
+        /// <summary>
+        /// Create pointers for ID2D1Factory, IDWriteFactory, and IWICImagingFactory
+        /// </summary>
         private void CreateDirect2DPointers()
         {
             Exception ex1;
@@ -58,6 +74,11 @@ namespace TextFormatter
             }
         }
 
+        /// <summary>
+        /// Create pointers for IWICBitmap and ID2D1RenderTarget, and set the canvas size
+        /// </summary>
+        /// <param name="width">Desired bitmap width in pixels</param>
+        /// <param name="height">Desired bitmap height in pixels</param>
         private void CreateDirect2DCanvas(uint width, uint height)
         {
             Exception ex1;
@@ -81,15 +102,25 @@ namespace TextFormatter
         {
             try
             {
+                // Create the Direct2D factories
                 CreateDirect2DPointers();
+                // Create the Direct2D bitmap and render target
                 CreateDirect2DCanvas(1280, 3408);
+                // Draw and save the image
                 if (DrawAndSaveImage() == ReturnCode.LOST_D2D1_RENDER_TARGET)
                 {
                     Trace.WriteLine("Attempting to recreate render target.");
                     Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.CreateRenderTarget(ref direct2DCanvas));
+                    if (DrawAndSaveImage() != ReturnCode.SUCCESS)
+                    {
+                        Trace.WriteLine("Failed to draw image and save it.");
+                    }
                 }
+                // We're not reusing the render target
                 Interop.UnsafeNativeMethods.ReleaseRenderTarget(direct2DCanvas);
+                // We're not reusing the bitmap
                 Interop.UnsafeNativeMethods.ReleaseWICBitmap(direct2DCanvas);
+                // Direct2D pointers are cleaned up in finalizer
             }
             catch (COMException ce)
             {
@@ -98,6 +129,9 @@ namespace TextFormatter
             }
         }
 
+        /// <summary>
+        /// Return codes for DrawAndSaveImage() method
+        /// </summary>
         private enum ReturnCode
         {
             LOST_D2D1_RENDER_TARGET = -1,
@@ -105,6 +139,9 @@ namespace TextFormatter
             SAVE_ERROR = 1
         }
 
+        /// <summary>
+        /// Create pointers for each ID2D1SolidColorBrush and store in dictionary
+        /// </summary>
         private void CreateBrushes()
         {
             brushes["borderBrush"] = Interop.UnsafeNativeMethods.CreateSolidColorBrush(direct2DCanvas, (uint)System.Drawing.Color.DarkGray.ToArgb());
@@ -121,6 +158,9 @@ namespace TextFormatter
             }
         }
 
+        /// <summary>
+        /// Release pointers for all ID2D1SolidColorBrush stored in dictionary
+        /// </summary>
         private void ReleaseBrushes()
         {
             foreach (KeyValuePair<string, IntPtr> entry in brushes)
@@ -130,6 +170,14 @@ namespace TextFormatter
             brushes.Clear();
         }
 
+        /// <summary>
+        /// Draw a IDWriteTextLayout to the screen
+        /// </summary>
+        /// <param name="textLayout">A TextLayoutResult containing a pointer to an IDWriteTextLayout</param>
+        /// <param name="startX">The x coordinate of the first pixel</param>
+        /// <param name="startY">The y coordinate of the first pixel</param>
+        /// <param name="colorBrush">A pointer to an ID2D1SolidColorBrush for the text colour</param>
+        /// <param name="releaseLayout">If true, releases the IDWriteTextLayout when done</param>
         private void DrawText(Interop.TextLayoutResult textLayout, int startX, int startY, IntPtr colorBrush, bool releaseLayout)
         {
             Trace.Assert(startX >= 0, $"{nameof(startX)} is less than zero. Value: {startX}");
@@ -142,6 +190,10 @@ namespace TextFormatter
             //}
         }
 
+        /// <summary>
+        /// Draw an image and then save it to a file
+        /// </summary>
+        /// <returns>A ReturnCode enum value</returns>
         private ReturnCode DrawAndSaveImage()
         {
             Exception ex1, ex2;

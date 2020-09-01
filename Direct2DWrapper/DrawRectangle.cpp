@@ -19,111 +19,100 @@ namespace Direct2DWrapper
 		return a + b;
 	}
 
-	DIRECT2DWRAPPER_C_FUNCTION
-		ID2D1Factory* CreateD2D1Factory()
+	struct Direct2DPointers
 	{
-		ID2D1Factory* pD2D1Factory = NULL;
+		ID2D1Factory* Direct2DFactory;
+		IDWriteFactory7* DirectWriteFactory;
+		IWICImagingFactory* WICImagingFactory;
+	};
 
+	struct Direct2DCanvas
+	{
+		IWICBitmap* Bitmap;
+		ID2D1RenderTarget* RenderTarget;
+		struct Direct2DPointers Direct2DPointers;
+	};
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT CreateD2D1Factory(struct Direct2DPointers* pDirect2DPointers)
+	{
 		D2D1_FACTORY_OPTIONS factoryOptions;
 		//factoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 
 		HRESULT hr = D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
 			//factoryOptions,
-			&pD2D1Factory
+			&pDirect2DPointers->Direct2DFactory
 		);
-		if (FAILED(hr))
-		{
-			return NULL;
-		}
-		return pD2D1Factory;
+		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void ReleaseD2D1Factory(ID2D1Factory* pD2D1Factory)
+		void ReleaseD2D1Factory(struct Direct2DPointers* direct2DPointers)
 	{
-		SafeRelease(&pD2D1Factory);
+		SafeRelease(&direct2DPointers->Direct2DFactory);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		IWICImagingFactory* CreateImagingFactory()
+		HRESULT CreateImagingFactory(struct Direct2DPointers* pDirect2DPointers)
 	{
-		IWICImagingFactory* pWICImagingFactory = NULL;
-
 		HRESULT hr = CoCreateInstance(
 			CLSID_WICImagingFactory,
 			nullptr,
 			CLSCTX_INPROC_SERVER,
 			__uuidof(IWICImagingFactory),
-			reinterpret_cast<void**>(&pWICImagingFactory)
+			reinterpret_cast<void**>(&pDirect2DPointers->WICImagingFactory)
 		);
-		if (FAILED(hr))
-		{
-			return NULL;
-		}
-		return pWICImagingFactory;
+		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void ReleaseImagingFactory(IWICImagingFactory* pWICImagingFactory)
+		void ReleaseImagingFactory(struct Direct2DPointers* direct2DPointers)
 	{
-		SafeRelease(&pWICImagingFactory);
+		SafeRelease(&direct2DPointers->WICImagingFactory);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		IDWriteFactory7* CreateDWriteFactory()
+		HRESULT CreateDWriteFactory(struct Direct2DPointers* pDirect2DPointers)
 	{
-		IDWriteFactory7* pDWriteFactory = NULL;
-
 		HRESULT hr = DWriteCreateFactory(
 			DWRITE_FACTORY_TYPE_SHARED,
 			__uuidof(IDWriteFactory7),
-			reinterpret_cast<IUnknown**>(&pDWriteFactory)
+			reinterpret_cast<IUnknown**>(&pDirect2DPointers->DirectWriteFactory)
 		);
-		if (FAILED(hr))
-		{
-			return NULL;
-		}
-		return pDWriteFactory;
+		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void ReleaseDWriteFactory(IDWriteFactory7* pDWriteFactory)
+		void ReleaseDWriteFactory(struct Direct2DPointers* direct2DPointers)
 	{
-		SafeRelease(&pDWriteFactory);
+		SafeRelease(&direct2DPointers->DirectWriteFactory);
 	}
 
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		IWICBitmap* CreateWICBitmap(IWICImagingFactory* pWICImagingFactory, UINT width, UINT height)
+		HRESULT CreateWICBitmap(struct Direct2DPointers* pDirect2DPointers, UINT width, UINT height, struct Direct2DCanvas* pCanvas)
 	{
-		IWICBitmap* pWICBitmap = NULL;
-
-		HRESULT hr = pWICImagingFactory->CreateBitmap(
+		pCanvas->Direct2DPointers = *pDirect2DPointers;
+		HRESULT hr = pDirect2DPointers->WICImagingFactory->CreateBitmap(
 			width,
 			height,
 			GUID_WICPixelFormat32bppPBGRA,
 			WICBitmapCacheOnLoad,
-			&pWICBitmap
+			&pCanvas->Bitmap
 		);
-		if (FAILED(hr))
-		{
-			return NULL;
-		}
-		return pWICBitmap;
+		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void ReleaseWICBitmap(IWICBitmap* pWICBitmap)
+		void ReleaseWICBitmap(struct Direct2DCanvas* pCanvas)
 	{
-		SafeRelease(&pWICBitmap);
+		SafeRelease(&pCanvas->Bitmap);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		ID2D1RenderTarget* CreateRenderTarget(ID2D1Factory* pD2D1Factory, IWICBitmap* pWICBitmap)
+		HRESULT CreateRenderTarget(struct Direct2DCanvas* pCanvas)
 	{
-		ID2D1RenderTarget* pD2D1RenderTarget = NULL;
-
 		D2D1_RENDER_TARGET_PROPERTIES targetProperties = D2D1::RenderTargetProperties();
 		D2D1_PIXEL_FORMAT desiredFormat = D2D1::PixelFormat(
 			DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -131,45 +120,41 @@ namespace Direct2DWrapper
 		);
 		targetProperties.pixelFormat = desiredFormat;
 
-		HRESULT hr = pD2D1Factory->CreateWicBitmapRenderTarget(
-			pWICBitmap,
+		HRESULT hr = pCanvas->Direct2DPointers.Direct2DFactory->CreateWicBitmapRenderTarget(
+			pCanvas->Bitmap,
 			targetProperties,
-			&pD2D1RenderTarget
+			&pCanvas->RenderTarget
 		);
-		if (FAILED(hr))
-		{
-			return NULL;
-		}
-		return pD2D1RenderTarget;
+		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void ReleaseRenderTarget(ID2D1RenderTarget* pD2D1RenderTarget)
+		void ReleaseRenderTarget(struct Direct2DCanvas* pCanvas)
 	{
-		SafeRelease(&pD2D1RenderTarget);
+		SafeRelease(&pCanvas->RenderTarget);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void BeginDraw(ID2D1RenderTarget* pD2D1RenderTarget)
+		void BeginDraw(struct Direct2DCanvas* pCanvas)
 	{
-		pD2D1RenderTarget->BeginDraw();
+		pCanvas->RenderTarget->BeginDraw();
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT EndDraw(ID2D1RenderTarget* pD2D1RenderTarget)
+		HRESULT EndDraw(struct Direct2DCanvas* pCanvas)
 	{
-		HRESULT hr = pD2D1RenderTarget->EndDraw();
+		HRESULT hr = pCanvas->RenderTarget->EndDraw();
 		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET)
 		{
-			SafeRelease(&pD2D1RenderTarget);
+			SafeRelease(&pCanvas->RenderTarget);
 		}
 		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void DrawImage(ID2D1RenderTarget* pD2D1RenderTarget, UINT32 argb)
+		void DrawImage(struct Direct2DCanvas* pCanvas, UINT32 argb)
 	{
-		pD2D1RenderTarget->Clear(
+		pCanvas->RenderTarget->Clear(
 			D2D1::ColorF( // using overload ColorF(UINT32 rgb, float a)
 				argb & 0xFFFFFF, // Lower 24 bits are 0xRRGGBB
 				((float)(argb >> 24 & 0xFF)) / 0xFF // Upper 8 bits are 0xAA - bit shift, cast to float, then divide by 255 (0xFF)
@@ -177,21 +162,16 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		ID2D1SolidColorBrush* CreateSolidColorBrush(ID2D1RenderTarget* pD2D1RenderTarget, UINT32 argb)
+		ID2D1SolidColorBrush* CreateSolidColorBrush(struct Direct2DCanvas* pCanvas, UINT32 argb)
 	{
 		ID2D1SolidColorBrush* pD2D1SolidColorBrush = NULL;
-
-		HRESULT hr = pD2D1RenderTarget->CreateSolidColorBrush(
+		HRESULT hr = pCanvas->RenderTarget->CreateSolidColorBrush(
 			D2D1::ColorF(D2D1::ColorF( // using overload ColorF(UINT32 rgb, float a)
 				argb & 0xFFFFFF, // Lower 24 bits are 0xRRGGBB
 				((float)(argb >> 24 & 0xFF)) / 0xFF // Upper 8 bits are 0xAA - bit shift, cast to float, then divide by 255 (0xFF)
 			)),
 			&pD2D1SolidColorBrush
 		);
-		if (FAILED(hr))
-		{
-			return NULL;
-		}
 		return pD2D1SolidColorBrush;
 	}
 
@@ -202,9 +182,9 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void DrawRectangleBorder(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth)
+		void DrawRectangleBorder(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth)
 	{
-		pD2D1RenderTarget->DrawRectangle(
+		pCanvas->RenderTarget->DrawRectangle(
 			D2D1::RectF(
 				startX + (lineWidth / 2),
 				startY + (lineWidth / 2),
@@ -217,9 +197,9 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void DrawLine(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth)
+		void DrawLine(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth)
 	{
-		pD2D1RenderTarget->DrawLine(
+		pCanvas->RenderTarget->DrawLine(
 			D2D1::Point2F(startX, startY),
 			D2D1::Point2F(stopX, stopY),
 			pD2D1SolidColorBrush,
@@ -228,9 +208,9 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void DrawRectangle(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY)
+		void DrawRectangle(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY)
 	{
-		pD2D1RenderTarget->FillRectangle(
+		pCanvas->RenderTarget->FillRectangle(
 			D2D1::RectF(
 				startX,
 				startY,
@@ -242,9 +222,8 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT PushEllipseLayer(ID2D1RenderTarget* pD2D1RenderTarget, ID2D1SolidColorBrush* pD2D1SolidColorBrush, float centerX, float centerY, float radiusX, float radiusY)
+		HRESULT PushEllipseLayer(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, float centerX, float centerY, float radiusX, float radiusY)
 	{
-		ID2D1Factory* pD2D1Factory = NULL;
 		ID2D1DeviceContext* pD2D1DeviceContext = NULL;
 		ID2D1EllipseGeometry* ellipseMask = NULL;
 
@@ -253,14 +232,13 @@ namespace Direct2DWrapper
 			centerY
 		);
 
-		pD2D1RenderTarget->GetFactory(&pD2D1Factory);
-		HRESULT hr = pD2D1RenderTarget->QueryInterface(
+		HRESULT hr = pCanvas->RenderTarget->QueryInterface(
 			__uuidof(ID2D1DeviceContext),
 			reinterpret_cast<void**>(&pD2D1DeviceContext)
 		);
 		if (SUCCEEDED(hr))
 		{
-			hr = pD2D1Factory->CreateEllipseGeometry(
+			hr = pCanvas->Direct2DPointers.Direct2DFactory->CreateEllipseGeometry(
 				D2D1::Ellipse(
 					centerPoint,
 					radiusX,
@@ -285,26 +263,25 @@ namespace Direct2DWrapper
 				pD2D1SolidColorBrush,
 				D2D1_LAYER_OPTIONS1_NONE
 			);
-			pD2D1RenderTarget->BeginDraw();
+			pCanvas->RenderTarget->BeginDraw();
 			pD2D1DeviceContext->PushLayer(layerParams, NULL);
 		}
 
 		SafeRelease(&ellipseMask);
 		pD2D1DeviceContext->Release();
-		pD2D1Factory->Release();
 		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT PopLayer(ID2D1RenderTarget* pD2D1RenderTarget)
+		HRESULT PopLayer(struct Direct2DCanvas* pCanvas)
 	{
-		pD2D1RenderTarget->PopLayer();
-		HRESULT hr = pD2D1RenderTarget->EndDraw();
+		pCanvas->RenderTarget->PopLayer();
+		HRESULT hr = pCanvas->RenderTarget->EndDraw();
 		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT DrawImageFromFilename(IWICImagingFactory* pWICImagingFactory, ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR filename, int startX, int startY, int width, int height)
+		HRESULT DrawImageFromFilename(struct Direct2DCanvas* pCanvas, PCWSTR filename, int startX, int startY, int width, int height)
 	{
 		IWICBitmapDecoder* pWICBitmapDecoder = NULL;
 		IWICBitmapFrameDecode* pWICBitmapFrameDecode = NULL;
@@ -313,13 +290,13 @@ namespace Direct2DWrapper
 		ID2D1Effect* pBitmapSourceEffect = NULL;
 		ID2D1DeviceContext* pD2D1DeviceContext = NULL;
 
-		HRESULT hr = pD2D1RenderTarget->QueryInterface(
+		HRESULT hr = pCanvas->RenderTarget->QueryInterface(
 			__uuidof(ID2D1DeviceContext),
 			reinterpret_cast<void**>(&pD2D1DeviceContext)
 		);
 		if (SUCCEEDED(hr))
 		{
-			hr = pWICImagingFactory->CreateDecoderFromFilename(
+			hr = pCanvas->Direct2DPointers.WICImagingFactory->CreateDecoderFromFilename(
 				filename,
 				NULL,
 				GENERIC_READ,
@@ -333,7 +310,7 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			hr = pWICImagingFactory->CreateFormatConverter(&pWICFormatConverter);
+			hr = pCanvas->Direct2DPointers.WICImagingFactory->CreateFormatConverter(&pWICFormatConverter);
 		}
 		if (SUCCEEDED(hr))
 		{
@@ -412,7 +389,7 @@ namespace Direct2DWrapper
 	}
 
 	struct TextLayoutResult {
-		IDWriteTextLayout* pDWriteTextLayout;
+		IDWriteTextLayout4* pDWriteTextLayout;
 		int lineCount; // Lines of text
 		int top; // Top edge of text block from edge of canvas
 		int left; // Left edge of text block from edge of canvas
@@ -426,13 +403,12 @@ namespace Direct2DWrapper
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT CreateTextLayoutFromString(
-			IDWriteFactory7* pDWriteFactory,
-			ID2D1RenderTarget* pD2D1RenderTarget,
+			struct Direct2DCanvas* pCanvas,
 			PCWSTR text,
 			int startX,
 			int startY,
-			int width,
-			int height,
+			float width,
+			float height,
 			bool justifyCentered,
 			PCWSTR fontName,
 			float fontSize,
@@ -446,7 +422,7 @@ namespace Direct2DWrapper
 		UINT32 len = wcslen(text);
 		DWRITE_TEXT_METRICS1 metrics;
 
-		HRESULT hr = pD2D1RenderTarget->QueryInterface(
+		HRESULT hr = pCanvas->RenderTarget->QueryInterface(
 			__uuidof(ID2D1DeviceContext),
 			reinterpret_cast<void**>(&pD2D1DeviceContext)
 		);
@@ -464,7 +440,7 @@ namespace Direct2DWrapper
 		if (SUCCEEDED(hr))
 		{
 			IDWriteTextFormat* pDWriteTextFormat = NULL;
-			hr = pDWriteFactory->CreateTextFormat(
+			hr = pCanvas->Direct2DPointers.DirectWriteFactory->CreateTextFormat(
 				fontName,
 				NULL,
 				weight,
@@ -490,14 +466,16 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			hr = pDWriteFactory->CreateTextLayout(
+			IDWriteTextLayout* pDWriteTextLayout;
+			hr = pCanvas->Direct2DPointers.DirectWriteFactory->CreateTextLayout(
 				text,
 				len,
 				pDWriteTextFormat3,
 				width,
 				height,
-				&textLayoutResult->pDWriteTextLayout
+				&pDWriteTextLayout
 			);
+			textLayoutResult->pDWriteTextLayout = (IDWriteTextLayout4*)pDWriteTextLayout;
 		}
 		if (SUCCEEDED(hr))
 		{
@@ -526,11 +504,11 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT DrawTextLayout(ID2D1RenderTarget* pD2D1RenderTarget, struct TextLayoutResult* textLayoutResult, int startX, int startY, ID2D1SolidColorBrush* pD2D1SolidColorBrush)
+		HRESULT DrawTextLayout(struct Direct2DCanvas* pCanvas, struct TextLayoutResult* textLayoutResult, int startX, int startY, ID2D1SolidColorBrush* pSolidColorBrush)
 	{
 		ID2D1DeviceContext4* pD2D1DeviceContext = NULL;
 
-		HRESULT hr = pD2D1RenderTarget->QueryInterface(
+		HRESULT hr = pCanvas->RenderTarget->QueryInterface(
 			__uuidof(ID2D1DeviceContext),
 			reinterpret_cast<void**>(&pD2D1DeviceContext)
 		);
@@ -539,7 +517,7 @@ namespace Direct2DWrapper
 			pD2D1DeviceContext->DrawTextLayout(
 				D2D1::Point2F(startX, startY),
 				textLayoutResult->pDWriteTextLayout,
-				pD2D1SolidColorBrush,
+				pSolidColorBrush,
 				D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT
 			);
 			pD2D1DeviceContext->Release();
@@ -554,7 +532,7 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT SaveImage(IWICImagingFactory* pWICImagingFactory, IWICBitmap* pWICBitmap, ID2D1RenderTarget* pD2D1RenderTarget, PCWSTR filename)
+		HRESULT SaveImage(struct Direct2DCanvas* pCanvas, PCWSTR filename)
 	{
 
 		IWICStream* pWICStream = NULL;
@@ -562,7 +540,7 @@ namespace Direct2DWrapper
 		IWICBitmapFrameEncode* pWICBitmapFrameEncode = NULL;
 		WICPixelFormatGUID pixelFormat = GUID_WICPixelFormatDontCare;
 
-		HRESULT hr = pWICImagingFactory->CreateStream(&pWICStream);
+		HRESULT hr = pCanvas->Direct2DPointers.WICImagingFactory->CreateStream(&pWICStream);
 
 		if (SUCCEEDED(hr))
 		{
@@ -573,7 +551,7 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			hr = pWICImagingFactory->CreateEncoder(
+			hr = pCanvas->Direct2DPointers.WICImagingFactory->CreateEncoder(
 				GUID_ContainerFormatPng,
 				NULL,
 				&pWICBitmapEncoder
@@ -599,7 +577,7 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			D2D1_SIZE_U renderTargetSize = pD2D1RenderTarget->GetPixelSize();
+			D2D1_SIZE_U renderTargetSize = pCanvas->RenderTarget->GetPixelSize();
 			hr = pWICBitmapFrameEncode->SetSize(
 				renderTargetSize.width,
 				renderTargetSize.height
@@ -611,7 +589,7 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			hr = pWICBitmapFrameEncode->WriteSource(pWICBitmap, NULL);
+			hr = pWICBitmapFrameEncode->WriteSource(pCanvas->Bitmap, NULL);
 		}
 		if (SUCCEEDED(hr))
 		{

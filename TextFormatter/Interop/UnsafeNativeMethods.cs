@@ -24,109 +24,112 @@ namespace TextFormatter.Interop
         /// <summary>
         /// Create an ID2D1Factory
         /// </summary>
-        /// <returns>A pointer to an ID2D1Factory</returns>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr CreateD2D1Factory();
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal static extern int CreateD2D1Factory(ref Direct2DPointers pDirect2DPointers);
 
         /// <summary>
         /// Free an ID2D1Factory
         /// </summary>
-        /// <param name="pD2DFactory">A pointer to the ID2D1Factory to be freed</param>
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void ReleaseD2D1Factory(IntPtr pD2DFactory);
+        internal extern static void ReleaseD2D1Factory(Direct2DPointers pDirect2DPointers);
 
         /// <summary>
         /// Create an IWICImagingFactory
         /// </summary>
-        /// <returns>A pointer to an IWICImagingFactory</returns>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr CreateImagingFactory();
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal static extern int CreateImagingFactory(ref Direct2DPointers pDirect2DPointers);
 
         /// <summary>
         /// Free an IWICImagingFactory
         /// </summary>
-        /// <param name="pWICImagingFactory">A pointer to the IWICImagingFactory to be freed</param>
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ReleaseImagingFactory(IntPtr pWICImagingFactory);
+        internal static extern void ReleaseImagingFactory(Direct2DPointers pDirect2DPointers);
 
         /// <summary>
         /// Create an IDWriteFactory7
         /// </summary>
-        /// <returns>A pointer to an IDWriteFactory7</returns>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr CreateDWriteFactory();
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal static extern int CreateDWriteFactory(ref Direct2DPointers pDirect2DPointers);
 
         /// <summary>
         /// Free an IDWriteFactory7
         /// </summary>
-        /// <param name="pDWriteFactory">A pointer to the IDWriteFactory7 to be freed</param>
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ReleaseDWriteFactory(IntPtr pDWriteFactory);
+        internal static extern void ReleaseDWriteFactory(Direct2DPointers pDirect2DPointers);
 
         /// <summary>
         /// Create an IWICBitmap
         /// </summary>
-        /// <param name="pWICImagingFactory">A pointer to an IWICImagingFactory</param>
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
         /// <param name="width">Desired bitmap width in pixels</param>
         /// <param name="height">Desired bitmap height in pixels</param>
-        /// <returns>A pointer to an IWICBitmap</returns>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr CreateWICBitmap(IntPtr pWICImagingFactory, uint width, uint height);
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal static extern int CreateWICBitmap(ref Direct2DPointers pDirect2DPointers, uint width, uint height, ref Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Free an IWICBitmap
         /// </summary>
-        /// <param name="pWICBitmap">A pointer to the IWICBitmap to be freed</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ReleaseWICBitmap(IntPtr pWICBitmap);
+        internal static extern void ReleaseWICBitmap(Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Create an ID2D1RenderTarget
         /// </summary>
-        /// <param name="pD2D1Factory">A pointer to an ID2D1Factory</param>
-        /// <param name="pWICBitmap">A pointer to an IWICBitmap</param>
-        /// <returns>A pointer to an ID2D1RenderTarget</returns>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static IntPtr CreateRenderTarget(IntPtr pD2D1Factory, IntPtr pWICBitmap);
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal extern static int CreateRenderTarget(ref Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Free an ID2D1RenderTarget
         /// </summary>
-        /// <param name="factory">A pointer to the ID2D1RenderTarget to be freed</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void ReleaseRenderTarget(IntPtr pD2D1RenderTarget);
+        internal extern static void ReleaseRenderTarget(Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Call Direct2D BeginDraw()
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void BeginDraw(IntPtr pD2D1RenderTarget);
+        internal extern static void BeginDraw(Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Call Direct2D EndDraw()
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
-        internal extern static int EndDraw(IntPtr pD2D1RenderTarget);
+        internal extern static int EndDraw(Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Draw an image
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="clearColor">A 32-bit unsigned integer containing the 8-bit values for ARGB - 0xAARRGGBB</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void DrawImage(IntPtr pD2D1RenderTarget, UInt32 clearColor);
+        internal extern static void DrawImage(Direct2DCanvas pCanvas, UInt32 clearColor);
 
         /// <summary>
         /// Create an ID2D1SolidColorBrush
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="fillColor">A 32-bit unsigned integer containing the 8-bit values for ARGB - 0xAARRGGBB</param>
         /// <returns>A pointer to an ID2D1SolidColorBrush</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static IntPtr CreateSolidColorBrush(IntPtr pD2D1RenderTarget, UInt32 fillColor);
+        internal extern static IntPtr CreateSolidColorBrush(Direct2DCanvas pCanvas, UInt32 fillColor);
 
         /// <summary>
         /// Free an ID2D1SolidColorBrush
@@ -138,7 +141,7 @@ namespace TextFormatter.Interop
         /// <summary>
         /// Draw a line
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the stroke colour</param>
         /// <param name="startX">The x coordinate of the first pixel</param>
         /// <param name="startY">The y coordinate of the first pixel</param>
@@ -146,7 +149,7 @@ namespace TextFormatter.Interop
         /// <param name="lengthY">The y coordinate of the second pixel</param>
         /// <param name="lineWidth">The brush thickness (line width) of the line drawn</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void DrawLine(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth);
+        internal extern static void DrawLine(Direct2DCanvas pCanvas, IntPtr pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth);
 
         /// <summary>
         /// Draw a rectangle border
@@ -159,7 +162,7 @@ namespace TextFormatter.Interop
         /// <param name="lengthY">The height of the rectangle in pixels</param>
         /// <param name="lineWidth">The brush thickness (line width) of the lines drawn</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void DrawRectangleBorder(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth);
+        internal extern static void DrawRectangleBorder(Direct2DCanvas pCanvas, IntPtr pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth);
 
         /// <summary>
         /// Draw a rectangle
@@ -171,7 +174,7 @@ namespace TextFormatter.Interop
         /// <param name="lengthX">The length of the rectangle in pixels</param>
         /// <param name="lengthY">The height of the rectangle in pixels</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void DrawRectangle(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY);
+        internal extern static void DrawRectangle(Direct2DCanvas pCanvas, IntPtr pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY);
 
         /// <summary>
         /// Call Direct2D BeginDraw() followed by a PushLayer() of an ellipses
@@ -184,21 +187,20 @@ namespace TextFormatter.Interop
         /// <param name="radiusY">The y radius of the ellipsis</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
-        internal extern static int PushEllipseLayer(IntPtr pD2D1RenderTarget, IntPtr pD2D1SolidColorBrush, float centerX, float centerY, float radiusX, float radiusY);
+        internal extern static int PushEllipseLayer(Direct2DCanvas pCanvas, IntPtr pD2D1SolidColorBrush, float centerX, float centerY, float radiusX, float radiusY);
 
         /// <summary>
         /// Call Direct2D PopLayer() followed by EndDraw()
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
-        internal extern static int PopLayer(IntPtr pD2D1RenderTarget);
+        internal extern static int PopLayer(Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Draw an image from a filename
         /// </summary>
-        /// <param name="pWICImagingFactory">A pointer to an IWICImagingFactory</param>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="filename">The path to the file of an existing image</param>
         /// <param name="startX">The x coordinate of the top-left pixel</param>
         /// <param name="startY">The y coordinate of the top-left pixel</param>
@@ -206,12 +208,12 @@ namespace TextFormatter.Interop
         /// <param name="height">The height of the image to be drawn after resizing</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static int DrawImageFromFilename(IntPtr pWICImagingFactory, IntPtr pD2D1RenderTarget, String filename, int startX, int startY, int width, int height);
+        internal extern static int DrawImageFromFilename(Direct2DCanvas pCanvas, String filename, int startX, int startY, int width, int height);
 
         /// <summary>
         /// Create an IDWriteTextLayout
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="text">A string containing the text to draw</param>
         /// <param name="startX">The x coordinate of the top-left pixel of the text block</param>
         /// <param name="startY">The y coordinate of the top-left pixel of the text block</param>
@@ -225,18 +227,18 @@ namespace TextFormatter.Interop
         /// <param name="textLayoutResult">A TextLayoutResult struct</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static int CreateTextLayoutFromString(IntPtr pDWriteFactory, IntPtr pD2D1RenderTarget, String text, int startX, int startY, int width, int height, bool justifyCentered, String fontName, float fontSize, int fontWeight, String localeName, out TextLayoutResult textLayoutResult);
+        internal extern static int CreateTextLayoutFromString(Direct2DCanvas pCanvas, String text, int startX, int startY, float width, float height, bool justifyCentered, String fontName, float fontSize, int fontWeight, String localeName, out TextLayoutResult textLayoutResult);
 
         /// <summary>
         /// Draw an IDWriteTextLayout
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="textLayoutResult">A struct TextLayoutResult containing a pointer to an IDWriteTextLayout</param>
         /// <param name="startX">The x coordinate of the top-left pixel of the text block</param>
         /// <param name="startY">The y coordinate of the top-left pixel of the text block</param>
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the text colour</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static void DrawTextLayout(IntPtr pD2D1RenderTarget, TextLayoutResult textLayoutResult, int startX, int startY, IntPtr pD2D1SolidColorBrush);
+        internal extern static void DrawTextLayout(Direct2DCanvas pCanvas, TextLayoutResult textLayoutResult, int startX, int startY, IntPtr pD2D1SolidColorBrush);
 
         /// <summary>
         /// Free an IDWriteTextLayout
@@ -248,12 +250,10 @@ namespace TextFormatter.Interop
         /// <summary>
         /// Save a drawn image
         /// </summary>
-        /// <param name="pWICImagingFactory">A pointer to an IWICImagingFactory</param>
-        /// <param name="pWICBitmap">A pointer to an IWICBitmap</param>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="filename">The path to the file where the image is to be saved</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static int SaveImage(IntPtr pWICImagingFactory, IntPtr pWICBitmap, IntPtr pD2D1RenderTarget, String filename);
+        internal extern static int SaveImage(Direct2DCanvas pCanvas, String filename);
     }
 }

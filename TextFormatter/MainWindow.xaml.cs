@@ -74,7 +74,7 @@ namespace TextFormatter
                 CreateDirect2DPointers();
                 // Create the Direct2D bitmap and render target
                 Models.TweetPanel verticalTweetPanel = CreateVerticalTweetPanel();
-                DrawVerticalTweet(verticalTweetPanel);
+                DrawVerticalTweet(verticalTweetPanel, @"G:\Program Files (x86)\mIRC\twimg\tmp\GMMH_NHS.jpg", "Greater Manchester Mental Health", "@GMMH_NHS", "A huge thank you to the wonderful team at HMP Hindley. You are all #GMMHSuperstars! 🌟🌟 #TogetherGMMH 💙", "Today, 13:42 UTC+1");
                 // We're not reusing the render target
                 //Interop.UnsafeNativeMethods.ReleaseRenderTarget(verticalTweetPanel.Direct2DCanvas);
                 // We're not reusing the bitmap
@@ -326,7 +326,7 @@ namespace TextFormatter
             return verticalTweetPanel;
         }
 
-        private void DrawVerticalTweet(Models.TweetPanel verticalTweetPanel)
+        private string DrawVerticalTweet(Models.TweetPanel verticalTweetPanel, string profileImageFilename, string displayName, string username, string text, string time, string retweeterDisplayName = null, string retweeterUsername = null)
         {
             verticalTweetPanel.ClearArea(verticalTweetPanel.TweetOriginPoint, verticalTweetPanel.TweetRectangle, brushes["backgroundBrush"], true, true);
 
@@ -334,7 +334,7 @@ namespace TextFormatter
             // TODO: Set ProfileImageFilename
             verticalTweetPanel.SetImage(
                 Models.CanvasElement.PROFILE_IMAGE,
-                @"C:\JohnDocs\tmp2\Computing\Web Sites\image manipulation\shaving_250px_square.png",
+                profileImageFilename,
                 240.0f,
                 240.0f
                 );
@@ -351,7 +351,7 @@ namespace TextFormatter
 
             #region Display name and username
             // TODO: Get DisplayName and set DisplayNameRectangle
-            verticalTweetPanel.DisplayName = "John Cook";
+            verticalTweetPanel.DisplayName = displayName;
             verticalTweetPanel.CreateTextLayout(Models.CanvasElement.DISPLAY_NAME, new Models.RectF()
             {
                 Left = 0.0f,
@@ -360,9 +360,9 @@ namespace TextFormatter
                 Bottom = verticalTweetPanel.ProfileImageRectangle.Bottom / 2
             });
             verticalTweetPanel.DrawTextLayout(Models.CanvasElement.SUBHEADER, brushes["textBrush"]);
-            
+
             // TODO: Get Username and set UsernameRectangle
-            verticalTweetPanel.Username = "@WatfordJC";
+            verticalTweetPanel.Username = username;
             verticalTweetPanel.CreateTextLayout(Models.CanvasElement.USERNAME, new Models.RectF()
             {
                 Left = 0.0f,
@@ -385,7 +385,7 @@ namespace TextFormatter
                 verticalTweetPanel.UsernameOriginPoint = new Models.PointF()
                 {
                     X = verticalTweetPanel.DisplayNameOriginPoint.X,
-                    Y = verticalTweetPanel.UsernameOriginPoint.Y + verticalTweetPanel.DisplayNameRectangle.Bottom
+                    Y = verticalTweetPanel.DisplayNameOriginPoint.Y + verticalTweetPanel.DisplayNameRectangle.Bottom
                 };
             }
             verticalTweetPanel.DrawTextLayout(Models.CanvasElement.DISPLAY_NAME, brushes["textBrush"]);
@@ -394,7 +394,7 @@ namespace TextFormatter
 
             #region Tweet text
             // TODO: Get TweetText and set TweetTextRectangle
-            verticalTweetPanel.TweetText = "File -> New -> 1280x3600 -> Save As -> Something.PNG. You'd think creating a blank PNG in Direct2D wouldn't involve that much learning, but it is day 3 and I think I'm now drawing a blank canvas with a white background off screen. A rectangle in 6 steps sounded way too easy.";
+            verticalTweetPanel.TweetText = text;
             verticalTweetPanel.CreateTextLayout(Models.CanvasElement.TEXT, new Models.RectF()
             {
                 Left = 0.0f,
@@ -406,7 +406,7 @@ namespace TextFormatter
             verticalTweetPanel.TweetTextOriginPoint = new Models.PointF()
             {
                 X = verticalTweetPanel.TweetOriginPoint.X,
-                Y = verticalTweetPanel.ProfileImageOriginPoint.Y + Math.Max(verticalTweetPanel.ProfileImageRectangle.Bottom, verticalTweetPanel.UsernameRectangle.Bottom) + 90.0f
+                Y = verticalTweetPanel.ProfileImageOriginPoint.Y + Math.Max(verticalTweetPanel.ProfileImageRectangle.Bottom, verticalTweetPanel.DisplayNameRectangle.Bottom + verticalTweetPanel.UsernameRectangle.Bottom) + 90.0f
             };
             verticalTweetPanel.DrawTextLayout(Models.CanvasElement.TEXT, brushes["textBrush"]);
             #endregion
@@ -421,7 +421,7 @@ namespace TextFormatter
             verticalTweetPanel.DrawImage(Models.CanvasElement.TWITTER_LOGO);
 
             // TODO: Get TweetTime and set TweetTimeRectangle
-            verticalTweetPanel.TweetTime = "August 27th 2020";
+            verticalTweetPanel.TweetTime = time;
             verticalTweetPanel.CreateTextLayout(Models.CanvasElement.TIME, new Models.RectF()
             {
                 Left = 0.0f,
@@ -442,49 +442,52 @@ namespace TextFormatter
             #endregion
 
             #region Retweet logo and Retweeter display name & username
-            // TODO: Calculate and set RetweetLogoOriginPoint
-            verticalTweetPanel.RetweetLogoOriginPoint = new Models.PointF()
+            if (retweeterDisplayName != null && retweeterUsername != null)
             {
-                X = verticalTweetPanel.TweetOriginPoint.X + 50.0f,
-                Y = verticalTweetPanel.TwitterLogoOriginPoint.Y + Math.Max(verticalTweetPanel.TwitterLogoRectangle.Bottom, verticalTweetPanel.TweetTimeRectangle.Bottom) + 50.0f
-            };
-            verticalTweetPanel.DrawImage(Models.CanvasElement.RETWEET_LOGO);
+                // TODO: Calculate and set RetweetLogoOriginPoint
+                verticalTweetPanel.RetweetLogoOriginPoint = new Models.PointF()
+                {
+                    X = verticalTweetPanel.TweetOriginPoint.X + 50.0f,
+                    Y = verticalTweetPanel.TwitterLogoOriginPoint.Y + Math.Max(verticalTweetPanel.TwitterLogoRectangle.Bottom, verticalTweetPanel.TweetTimeRectangle.Bottom) + 50.0f
+                };
+                verticalTweetPanel.DrawImage(Models.CanvasElement.RETWEET_LOGO);
 
-            // TODO: Get RetweeterDisplayName and set RetweeterDisplayNameRectangle
-            verticalTweetPanel.RetweeterDisplayName = "Nobody";
-            verticalTweetPanel.CreateTextLayout(Models.CanvasElement.RETWEETER_DISPLAY_NAME, new Models.RectF()
-            {
-                Left = 0.0f,
-                Top = 0.0f,
-                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.RetweetLogoRectangle.Right - 100.0f,
-                Bottom = verticalTweetPanel.RetweetLogoRectangle.Bottom
-            });
-            // TODO: Calculate and set RetweeterDisplayNameOriginPoint
-            verticalTweetPanel.RetweeterDisplayNameOriginPoint = new Models.PointF()
-            {
-                X = verticalTweetPanel.TweetOriginPoint.X + verticalTweetPanel.RetweetLogoRectangle.Right + 100.0f,
-                Y = verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom < verticalTweetPanel.RetweetLogoRectangle.Bottom
+                // TODO: Get RetweeterDisplayName and set RetweeterDisplayNameRectangle
+                verticalTweetPanel.RetweeterDisplayName = retweeterDisplayName;
+                verticalTweetPanel.CreateTextLayout(Models.CanvasElement.RETWEETER_DISPLAY_NAME, new Models.RectF()
+                {
+                    Left = 0.0f,
+                    Top = 0.0f,
+                    Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.RetweetLogoRectangle.Right - 100.0f,
+                    Bottom = verticalTweetPanel.RetweetLogoRectangle.Bottom
+                });
+                // TODO: Calculate and set RetweeterDisplayNameOriginPoint
+                verticalTweetPanel.RetweeterDisplayNameOriginPoint = new Models.PointF()
+                {
+                    X = verticalTweetPanel.TweetOriginPoint.X + verticalTweetPanel.RetweetLogoRectangle.Right + 100.0f,
+                    Y = verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom < verticalTweetPanel.RetweetLogoRectangle.Bottom
                     ? verticalTweetPanel.RetweetLogoOriginPoint.Y + ((verticalTweetPanel.RetweetLogoRectangle.Bottom - verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom) / 2)
                     : verticalTweetPanel.RetweetLogoOriginPoint.Y
-            };
+                };
 
-            // TODO: Get RetweeterUsername and set RetweeterUsernameRectangle
-            verticalTweetPanel.RetweeterUsername = "(@search)";
-            verticalTweetPanel.CreateTextLayout(Models.CanvasElement.RETWEETER_USERNAME, new Models.RectF()
-            {
-                Left = 0.0f,
-                Top = 0.0f,
-                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.RetweetLogoRectangle.Right,
-                Bottom = verticalTweetPanel.RetweetLogoRectangle.Bottom
-            });
-            // TODO: Calculate and set RetweeterUsernameOriginPoint
-            verticalTweetPanel.RetweeterUsernameOriginPoint = new Models.PointF()
-            {
-                X = verticalTweetPanel.RetweeterDisplayNameOriginPoint.X,
-                Y = verticalTweetPanel.RetweetLogoOriginPoint.Y + Math.Max(verticalTweetPanel.RetweetLogoRectangle.Bottom, verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom)
-            };
-            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.RETWEETER_DISPLAY_NAME, brushes["textBrush"]);
-            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.RETWEETER_USERNAME, brushes["textBrush"]);
+                // TODO: Get RetweeterUsername and set RetweeterUsernameRectangle
+                verticalTweetPanel.RetweeterUsername = $"({retweeterUsername})";
+                verticalTweetPanel.CreateTextLayout(Models.CanvasElement.RETWEETER_USERNAME, new Models.RectF()
+                {
+                    Left = 0.0f,
+                    Top = 0.0f,
+                    Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.RetweetLogoRectangle.Right,
+                    Bottom = verticalTweetPanel.RetweetLogoRectangle.Bottom
+                });
+                // TODO: Calculate and set RetweeterUsernameOriginPoint
+                verticalTweetPanel.RetweeterUsernameOriginPoint = new Models.PointF()
+                {
+                    X = verticalTweetPanel.RetweeterDisplayNameOriginPoint.X,
+                    Y = verticalTweetPanel.RetweetLogoOriginPoint.Y + Math.Max(verticalTweetPanel.RetweetLogoRectangle.Bottom, verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom)
+                };
+                verticalTweetPanel.DrawTextLayout(Models.CanvasElement.RETWEETER_DISPLAY_NAME, brushes["textBrush"]);
+                verticalTweetPanel.DrawTextLayout(Models.CanvasElement.RETWEETER_USERNAME, brushes["textBrush"]);
+            }
             #endregion
 
             #region Finish drawing to canvas
@@ -513,10 +516,12 @@ namespace TextFormatter
                 // Open file explorer with the saved file selected
                 string selectFileArgument = $"/select, \"{saveLocation}\"";
                 Process.Start("explorer.exe", selectFileArgument);
+                return saveLocation;
             }
             catch (FileNotFoundException e)
             {
                 Trace.WriteLine($"Error saving to file {saveLocation}: {e.Message} - {e.InnerException?.Message}");
+                return null;
             }
             #endregion
         }

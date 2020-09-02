@@ -146,13 +146,13 @@ namespace TextFormatter
 
             #region Set filenames and image sizes for resources
             verticalTweetPanel.SetImage(
-                CanvasElement.TWITTER_LOGO,
+                CanvasElement.NETWORK_LOGO,
                 @"C:/Users/John/Pictures/Twitch/Twitter_Logo_Blue.png",
                 240.0f,
                 240.0f
                 );
             verticalTweetPanel.SetImage(
-                CanvasElement.RETWEET_LOGO,
+                CanvasElement.SHARE_LOGO,
                 @"C:/Users/John/Pictures/Twitch/Twitter_Retweet.png",
                 240.0f - 100.0f,
                 240.0f - 100.0f
@@ -200,21 +200,21 @@ namespace TextFormatter
             verticalTweetPanel.SetFont(CanvasElement.TIME, new Interop.FontSettings()
             {
                 FontName = "Noto Sans",
-                FontSize = verticalTweetPanel.TwitterLogoRectangle.Bottom / 3,
+                FontSize = verticalTweetPanel.NetworkLogoRectangle.Bottom / 3,
                 FontWeight = 700,
                 LocaleName = "en-GB"
             });
-            verticalTweetPanel.SetFont(CanvasElement.RETWEETER_DISPLAY_NAME, new Interop.FontSettings()
+            verticalTweetPanel.SetFont(CanvasElement.SHARER_DISPLAY_NAME, new Interop.FontSettings()
             {
                 FontName = "Noto Sans",
-                FontSize = verticalTweetPanel.TwitterLogoRectangle.Bottom / 3,
+                FontSize = verticalTweetPanel.NetworkLogoRectangle.Bottom / 3,
                 FontWeight = 700,
                 LocaleName = "en-GB"
             });
-            verticalTweetPanel.SetFont(CanvasElement.RETWEETER_USERNAME, new Interop.FontSettings()
+            verticalTweetPanel.SetFont(CanvasElement.SHARER_USERNAME, new Interop.FontSettings()
             {
                 FontName = "Noto Sans",
-                FontSize = verticalTweetPanel.TwitterLogoRectangle.Bottom / 3,
+                FontSize = verticalTweetPanel.NetworkLogoRectangle.Bottom / 3,
                 FontWeight = 500,
                 LocaleName = "en-GB"
             });
@@ -283,25 +283,25 @@ namespace TextFormatter
             #endregion
 
             #region Set Tweet area relative to canvas
-            verticalTweetPanel.TweetOriginPoint = new Interop.PointF()
+            verticalTweetPanel.MessageOriginPoint = new Interop.PointF()
             {
                 X = 60.0f,
                 Y = verticalTweetPanel.HeadingSeparatorRectangle.Bottom + 90.0f
             };
-            verticalTweetPanel.TweetRectangle = new Interop.RectF()
+            verticalTweetPanel.MessageRectangle = new Interop.RectF()
             {
                 Left = 0,
                 Top = 0,
-                Right = verticalTweetPanel.PanelRectangle.Width - (verticalTweetPanel.TweetOriginPoint.X * 2),
-                Bottom = verticalTweetPanel.PanelRectangle.Height - verticalTweetPanel.TweetOriginPoint.Y - 60.0f
+                Right = verticalTweetPanel.PanelRectangle.Width - (verticalTweetPanel.MessageOriginPoint.X * 2),
+                Bottom = verticalTweetPanel.PanelRectangle.Height - verticalTweetPanel.MessageOriginPoint.Y - 60.0f
             };
             #endregion
 
             #region Set Tweet profile image area relative to canvas
             verticalTweetPanel.ProfileImageOriginPoint = new Interop.PointF()
             {
-                X = verticalTweetPanel.TweetOriginPoint.X,
-                Y = verticalTweetPanel.TweetOriginPoint.Y
+                X = verticalTweetPanel.MessageOriginPoint.X,
+                Y = verticalTweetPanel.MessageOriginPoint.Y
             };
             verticalTweetPanel.ProfileImageRectangle = new Interop.RectF()
             {
@@ -327,7 +327,7 @@ namespace TextFormatter
 
         private string DrawVerticalTweet(TweetPanel verticalTweetPanel, string profileImageFilename, string displayName, string username, string text, string time, string retweeterDisplayName = null, string retweeterUsername = null)
         {
-            verticalTweetPanel.ClearArea(verticalTweetPanel.TweetOriginPoint, verticalTweetPanel.TweetRectangle, brushes["backgroundBrush"], true, true);
+            verticalTweetPanel.ClearArea(verticalTweetPanel.MessageOriginPoint, verticalTweetPanel.MessageRectangle, brushes["backgroundBrush"], true, true);
 
             #region Profile image
             // TODO: Set ProfileImageFilename
@@ -355,7 +355,7 @@ namespace TextFormatter
             {
                 Left = 0.0f,
                 Top = 0.0f,
-                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.ProfileImageRectangle.Right - verticalTweetPanel.ProfileImageOriginPoint.X,
+                Right = verticalTweetPanel.MessageRectangle.Right - verticalTweetPanel.ProfileImageRectangle.Right - verticalTweetPanel.ProfileImageOriginPoint.X,
                 Bottom = verticalTweetPanel.ProfileImageRectangle.Bottom / 2
             });
             verticalTweetPanel.DrawTextLayout(CanvasElement.SUBHEADER, brushes["textBrush"]);
@@ -366,7 +366,7 @@ namespace TextFormatter
             {
                 Left = 0.0f,
                 Top = 0.0f,
-                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.ProfileImageRectangle.Right - verticalTweetPanel.ProfileImageOriginPoint.X,
+                Right = verticalTweetPanel.MessageRectangle.Right - verticalTweetPanel.ProfileImageRectangle.Right - verticalTweetPanel.ProfileImageOriginPoint.X,
                 Bottom = verticalTweetPanel.ProfileImageRectangle.Bottom / 2
             });
 
@@ -376,7 +376,7 @@ namespace TextFormatter
                 verticalTweetPanel.UsernameOriginPoint = new Interop.PointF()
                 {
                     X = verticalTweetPanel.DisplayNameOriginPoint.X,
-                    Y = verticalTweetPanel.TweetOriginPoint.Y + (verticalTweetPanel.ProfileImageRectangle.Bottom / 2)
+                    Y = verticalTweetPanel.MessageOriginPoint.Y + (verticalTweetPanel.ProfileImageRectangle.Bottom / 2)
                 };
             }
             else
@@ -393,18 +393,18 @@ namespace TextFormatter
 
             #region Tweet text
             // TODO: Get TweetText and set TweetTextRectangle
-            verticalTweetPanel.TweetText = text;
+            verticalTweetPanel.MessageText = text;
             verticalTweetPanel.CreateTextLayout(CanvasElement.TEXT, new Interop.RectF()
             {
                 Left = 0.0f,
                 Top = 0.0f,
-                Right = verticalTweetPanel.TweetRectangle.Right,
-                Bottom = verticalTweetPanel.TweetRectangle.Bottom - verticalTweetPanel.UsernameRectangle.Bottom
+                Right = verticalTweetPanel.MessageRectangle.Right,
+                Bottom = verticalTweetPanel.MessageRectangle.Bottom - verticalTweetPanel.UsernameRectangle.Bottom
             });
             // TODO: Calculate and set TweetTextOriginPoint
-            verticalTweetPanel.TweetTextOriginPoint = new Interop.PointF()
+            verticalTweetPanel.MessageTextOriginPoint = new Interop.PointF()
             {
-                X = verticalTweetPanel.TweetOriginPoint.X,
+                X = verticalTweetPanel.MessageOriginPoint.X,
                 Y = verticalTweetPanel.ProfileImageOriginPoint.Y + Math.Max(verticalTweetPanel.ProfileImageRectangle.Bottom, verticalTweetPanel.DisplayNameRectangle.Bottom + verticalTweetPanel.UsernameRectangle.Bottom) + 90.0f
             };
             verticalTweetPanel.DrawTextLayout(CanvasElement.TEXT, brushes["textBrush"]);
@@ -412,30 +412,30 @@ namespace TextFormatter
 
             #region Twitter logo and time
             // TODO: Calculate and set TwitterLogoOriginPoint
-            verticalTweetPanel.TwitterLogoOriginPoint = new Interop.PointF()
+            verticalTweetPanel.NetworkLogoOriginPoint = new Interop.PointF()
             {
-                X = verticalTweetPanel.TweetOriginPoint.X,
-                Y = verticalTweetPanel.TweetTextOriginPoint.Y + verticalTweetPanel.TweetTextRectangle.Bottom + 60.0f
+                X = verticalTweetPanel.MessageOriginPoint.X,
+                Y = verticalTweetPanel.MessageTextOriginPoint.Y + verticalTweetPanel.MessageTextRectangle.Bottom + 60.0f
             };
-            verticalTweetPanel.DrawImage(CanvasElement.TWITTER_LOGO);
+            verticalTweetPanel.DrawImage(CanvasElement.NETWORK_LOGO);
 
             // TODO: Get TweetTime and set TweetTimeRectangle
-            verticalTweetPanel.TweetTime = time;
+            verticalTweetPanel.Time = time;
             verticalTweetPanel.CreateTextLayout(CanvasElement.TIME, new Interop.RectF()
             {
                 Left = 0.0f,
                 Top = 0.0f,
-                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.TwitterLogoRectangle.Right,
-                Bottom = verticalTweetPanel.TwitterLogoRectangle.Bottom
+                Right = verticalTweetPanel.MessageRectangle.Right - verticalTweetPanel.NetworkLogoRectangle.Right,
+                Bottom = verticalTweetPanel.NetworkLogoRectangle.Bottom
             });
 
             // TODO: Calculate and set TweetTimeOriginPoint
-            verticalTweetPanel.TweetTimeOriginPoint = new Interop.PointF()
+            verticalTweetPanel.TimeOriginPoint = new Interop.PointF()
             {
-                X = verticalTweetPanel.TweetOriginPoint.X + verticalTweetPanel.TwitterLogoRectangle.Right,
-                Y = verticalTweetPanel.TweetTimeRectangle.Bottom < verticalTweetPanel.TwitterLogoRectangle.Bottom
-                    ? verticalTweetPanel.TwitterLogoOriginPoint.Y + ((verticalTweetPanel.TwitterLogoRectangle.Bottom - verticalTweetPanel.TweetTimeRectangle.Bottom) / 2)
-                    : verticalTweetPanel.TwitterLogoOriginPoint.Y
+                X = verticalTweetPanel.MessageOriginPoint.X + verticalTweetPanel.NetworkLogoRectangle.Right,
+                Y = verticalTweetPanel.TimeRectangle.Bottom < verticalTweetPanel.NetworkLogoRectangle.Bottom
+                    ? verticalTweetPanel.NetworkLogoOriginPoint.Y + ((verticalTweetPanel.NetworkLogoRectangle.Bottom - verticalTweetPanel.TimeRectangle.Bottom) / 2)
+                    : verticalTweetPanel.NetworkLogoOriginPoint.Y
             };
             verticalTweetPanel.DrawTextLayout(CanvasElement.TIME, brushes["textBrush"]);
             #endregion
@@ -444,48 +444,48 @@ namespace TextFormatter
             if (retweeterDisplayName != null && retweeterUsername != null)
             {
                 // TODO: Calculate and set RetweetLogoOriginPoint
-                verticalTweetPanel.RetweetLogoOriginPoint = new Interop.PointF()
+                verticalTweetPanel.ShareLogoOriginPoint = new Interop.PointF()
                 {
-                    X = verticalTweetPanel.TweetOriginPoint.X + 50.0f,
-                    Y = verticalTweetPanel.TwitterLogoOriginPoint.Y + Math.Max(verticalTweetPanel.TwitterLogoRectangle.Bottom, verticalTweetPanel.TweetTimeRectangle.Bottom) + 50.0f
+                    X = verticalTweetPanel.MessageOriginPoint.X + 50.0f,
+                    Y = verticalTweetPanel.NetworkLogoOriginPoint.Y + Math.Max(verticalTweetPanel.NetworkLogoRectangle.Bottom, verticalTweetPanel.TimeRectangle.Bottom) + 50.0f
                 };
-                verticalTweetPanel.DrawImage(CanvasElement.RETWEET_LOGO);
+                verticalTweetPanel.DrawImage(CanvasElement.SHARE_LOGO);
 
                 // TODO: Get RetweeterDisplayName and set RetweeterDisplayNameRectangle
-                verticalTweetPanel.RetweeterDisplayName = retweeterDisplayName;
-                verticalTweetPanel.CreateTextLayout(CanvasElement.RETWEETER_DISPLAY_NAME, new Interop.RectF()
+                verticalTweetPanel.SharerDisplayName = retweeterDisplayName;
+                verticalTweetPanel.CreateTextLayout(CanvasElement.SHARER_DISPLAY_NAME, new Interop.RectF()
                 {
                     Left = 0.0f,
                     Top = 0.0f,
-                    Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.RetweetLogoRectangle.Right - 100.0f,
-                    Bottom = verticalTweetPanel.RetweetLogoRectangle.Bottom
+                    Right = verticalTweetPanel.MessageRectangle.Right - verticalTweetPanel.ShareLogoRectangle.Right - 100.0f,
+                    Bottom = verticalTweetPanel.ShareLogoRectangle.Bottom
                 });
                 // TODO: Calculate and set RetweeterDisplayNameOriginPoint
-                verticalTweetPanel.RetweeterDisplayNameOriginPoint = new Interop.PointF()
+                verticalTweetPanel.SharerDisplayNameOriginPoint = new Interop.PointF()
                 {
-                    X = verticalTweetPanel.TweetOriginPoint.X + verticalTweetPanel.RetweetLogoRectangle.Right + 100.0f,
-                    Y = verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom < verticalTweetPanel.RetweetLogoRectangle.Bottom
-                    ? verticalTweetPanel.RetweetLogoOriginPoint.Y + ((verticalTweetPanel.RetweetLogoRectangle.Bottom - verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom) / 2)
-                    : verticalTweetPanel.RetweetLogoOriginPoint.Y
+                    X = verticalTweetPanel.MessageOriginPoint.X + verticalTweetPanel.ShareLogoRectangle.Right + 100.0f,
+                    Y = verticalTweetPanel.SharerDisplayNameRectangle.Bottom < verticalTweetPanel.ShareLogoRectangle.Bottom
+                    ? verticalTweetPanel.ShareLogoOriginPoint.Y + ((verticalTweetPanel.ShareLogoRectangle.Bottom - verticalTweetPanel.SharerDisplayNameRectangle.Bottom) / 2)
+                    : verticalTweetPanel.ShareLogoOriginPoint.Y
                 };
 
                 // TODO: Get RetweeterUsername and set RetweeterUsernameRectangle
-                verticalTweetPanel.RetweeterUsername = $"({retweeterUsername})";
-                verticalTweetPanel.CreateTextLayout(CanvasElement.RETWEETER_USERNAME, new Interop.RectF()
+                verticalTweetPanel.SharerUsername = $"({retweeterUsername})";
+                verticalTweetPanel.CreateTextLayout(CanvasElement.SHARER_USERNAME, new Interop.RectF()
                 {
                     Left = 0.0f,
                     Top = 0.0f,
-                    Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.RetweetLogoRectangle.Right,
-                    Bottom = verticalTweetPanel.RetweetLogoRectangle.Bottom
+                    Right = verticalTweetPanel.MessageRectangle.Right - verticalTweetPanel.ShareLogoRectangle.Right,
+                    Bottom = verticalTweetPanel.ShareLogoRectangle.Bottom
                 });
                 // TODO: Calculate and set RetweeterUsernameOriginPoint
-                verticalTweetPanel.RetweeterUsernameOriginPoint = new Interop.PointF()
+                verticalTweetPanel.SharerUsernameOriginPoint = new Interop.PointF()
                 {
-                    X = verticalTweetPanel.RetweeterDisplayNameOriginPoint.X,
-                    Y = verticalTweetPanel.RetweetLogoOriginPoint.Y + Math.Max(verticalTweetPanel.RetweetLogoRectangle.Bottom, verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom)
+                    X = verticalTweetPanel.SharerDisplayNameOriginPoint.X,
+                    Y = verticalTweetPanel.ShareLogoOriginPoint.Y + Math.Max(verticalTweetPanel.ShareLogoRectangle.Bottom, verticalTweetPanel.SharerDisplayNameRectangle.Bottom)
                 };
-                verticalTweetPanel.DrawTextLayout(CanvasElement.RETWEETER_DISPLAY_NAME, brushes["textBrush"]);
-                verticalTweetPanel.DrawTextLayout(CanvasElement.RETWEETER_USERNAME, brushes["textBrush"]);
+                verticalTweetPanel.DrawTextLayout(CanvasElement.SHARER_DISPLAY_NAME, brushes["textBrush"]);
+                verticalTweetPanel.DrawTextLayout(CanvasElement.SHARER_USERNAME, brushes["textBrush"]);
             }
             #endregion
 

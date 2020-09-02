@@ -13,16 +13,16 @@ namespace TextFormatter
         HEADER = 1,
         SUBHEADER = 2,
         HEADING_SEPARATOR = 3,
-        TWEET = 4,
+        MESSAGE = 4,
         PROFILE_IMAGE = 5,
         DISPLAY_NAME = 6,
         USERNAME = 7,
         TEXT = 8,
-        TWITTER_LOGO = 9,
+        NETWORK_LOGO = 9,
         TIME = 10,
-        RETWEET_LOGO = 11,
-        RETWEETER_DISPLAY_NAME = 12,
-        RETWEETER_USERNAME = 13
+        SHARE_LOGO = 11,
+        SHARER_DISPLAY_NAME = 12,
+        SHARER_USERNAME = 13
     };
 
     public class TweetPanel
@@ -35,10 +35,10 @@ namespace TextFormatter
         private TextLayoutResult subHeaderTextLayout;
         private TextLayoutResult displayNameTextLayout;
         private TextLayoutResult usernameTextLayout;
-        private TextLayoutResult tweetTextTextLayout;
+        private TextLayoutResult messageTextTextLayout;
         private TextLayoutResult timeTextLayout;
-        private TextLayoutResult retweeterDisplayNameTextLayout;
-        private TextLayoutResult retweeterUsernameTextLayout;
+        private TextLayoutResult sharerDisplayNameTextLayout;
+        private TextLayoutResult sharerUsernameTextLayout;
         #endregion
 
         #region Properties
@@ -68,8 +68,8 @@ namespace TextFormatter
             }
         }
 
-        public PointF TweetOriginPoint { get; set; }
-        public RectF TweetRectangle { get; set; }
+        public PointF MessageOriginPoint { get; set; }
+        public RectF MessageRectangle { get; set; }
 
         public PointF ProfileImageOriginPoint { get; set; }
         public RectF ProfileImageRectangle { get; set; }
@@ -85,33 +85,33 @@ namespace TextFormatter
         public FontSettings UsernameFont { get; set; }
         public string Username { get; set; } = String.Empty;
 
-        public PointF TweetTextOriginPoint { get; set; }
-        public RectF TweetTextRectangle { get; set; }
-        public FontSettings TweetTextFont { get; set; }
-        public string TweetText { get; set; } = String.Empty;
+        public PointF MessageTextOriginPoint { get; set; }
+        public RectF MessageTextRectangle { get; set; }
+        public FontSettings MessageTextFont { get; set; }
+        public string MessageText { get; set; } = String.Empty;
 
-        public PointF TwitterLogoOriginPoint { get; set; }
-        public RectF TwitterLogoRectangle { get; set; }
-        public string TwitterLogoFilename { get; set; } = String.Empty;
+        public PointF NetworkLogoOriginPoint { get; set; }
+        public RectF NetworkLogoRectangle { get; set; }
+        public string NetworkLogoFilename { get; set; } = String.Empty;
 
-        public PointF TweetTimeOriginPoint { get; set; }
-        public RectF TweetTimeRectangle { get; set; }
-        public FontSettings TweetTimeFont { get; set; }
-        public string TweetTime { get; set; } = String.Empty;
+        public PointF TimeOriginPoint { get; set; }
+        public RectF TimeRectangle { get; set; }
+        public FontSettings TimeFont { get; set; }
+        public string Time { get; set; } = String.Empty;
 
-        public PointF RetweetLogoOriginPoint { get; set; }
-        public RectF RetweetLogoRectangle { get; set; }
-        public string RetweetLogoFilename { get; set; } = String.Empty;
+        public PointF ShareLogoOriginPoint { get; set; }
+        public RectF ShareLogoRectangle { get; set; }
+        public string ShareLogoFilename { get; set; } = String.Empty;
 
-        public PointF RetweeterDisplayNameOriginPoint { get; set; }
-        public RectF RetweeterDisplayNameRectangle { get; set; }
-        public FontSettings RetweeterDisplayNameFont { get; set; }
-        public string RetweeterDisplayName { get; set; } = String.Empty;
+        public PointF SharerDisplayNameOriginPoint { get; set; }
+        public RectF SharerDisplayNameRectangle { get; set; }
+        public FontSettings SharerDisplayNameFont { get; set; }
+        public string SharerDisplayName { get; set; } = String.Empty;
 
-        public PointF RetweeterUsernameOriginPoint { get; set; }
-        public RectF RetweeterUsernameRectangle { get; set; }
-        public FontSettings RetweeterUsernameFont { get; set; }
-        public string RetweeterUsername { get; set; } = String.Empty;
+        public PointF SharerUsernameOriginPoint { get; set; }
+        public RectF SharerUsernameRectangle { get; set; }
+        public FontSettings SharerUsernameFont { get; set; }
+        public string SharerUsername { get; set; } = String.Empty;
         #endregion
 
         public TweetPanel(ref Direct2DPointers direct2DPointers, SizeU canvasSize, UInt32 backgroundColor)
@@ -158,16 +158,16 @@ namespace TextFormatter
                     UsernameFont = fontSettings;
                     break;
                 case CanvasElement.TEXT:
-                    TweetTextFont = fontSettings;
+                    MessageTextFont = fontSettings;
                     break;
                 case CanvasElement.TIME:
-                    TweetTimeFont = fontSettings;
+                    TimeFont = fontSettings;
                     break;
-                case CanvasElement.RETWEETER_DISPLAY_NAME:
-                    RetweeterDisplayNameFont = fontSettings;
+                case CanvasElement.SHARER_DISPLAY_NAME:
+                    SharerDisplayNameFont = fontSettings;
                     break;
-                case CanvasElement.RETWEETER_USERNAME:
-                    RetweeterUsernameFont = fontSettings;
+                case CanvasElement.SHARER_USERNAME:
+                    SharerUsernameFont = fontSettings;
                     break;
                 default:
                     throw new Exception($"{nameof(canvasElement)} does not have settable font settings.");
@@ -178,13 +178,13 @@ namespace TextFormatter
         {
             switch (canvasElement)
             {
-                case CanvasElement.TWITTER_LOGO:
-                    TwitterLogoFilename = filename;
-                    TwitterLogoRectangle = new RectF() { Left = 0, Top = 0, Right = width, Bottom = height };
+                case CanvasElement.NETWORK_LOGO:
+                    NetworkLogoFilename = filename;
+                    NetworkLogoRectangle = new RectF() { Left = 0, Top = 0, Right = width, Bottom = height };
                     break;
-                case CanvasElement.RETWEET_LOGO:
-                    RetweetLogoFilename = filename;
-                    RetweetLogoRectangle = new RectF() { Left = 0, Top = 0, Right = width, Bottom = height };
+                case CanvasElement.SHARE_LOGO:
+                    ShareLogoFilename = filename;
+                    ShareLogoRectangle = new RectF() { Left = 0, Top = 0, Right = width, Bottom = height };
                     break;
                 case CanvasElement.PROFILE_IMAGE:
                     ProfileImageFilename = filename;
@@ -203,10 +203,10 @@ namespace TextFormatter
                 CanvasElement.SUBHEADER => SubHeaderFont,
                 CanvasElement.DISPLAY_NAME => DisplayNameFont,
                 CanvasElement.USERNAME => UsernameFont,
-                CanvasElement.TEXT => TweetTextFont,
-                CanvasElement.TIME => TweetTimeFont,
-                CanvasElement.RETWEETER_DISPLAY_NAME => RetweeterDisplayNameFont,
-                CanvasElement.RETWEETER_USERNAME => RetweeterUsernameFont,
+                CanvasElement.TEXT => MessageTextFont,
+                CanvasElement.TIME => TimeFont,
+                CanvasElement.SHARER_DISPLAY_NAME => SharerDisplayNameFont,
+                CanvasElement.SHARER_USERNAME => SharerUsernameFont,
                 _ => throw new Exception($"{nameof(canvasElement)} does not have settable font settings."),
             };
         }
@@ -215,8 +215,8 @@ namespace TextFormatter
         {
             return canvasElement switch
             {
-                CanvasElement.TWITTER_LOGO => TwitterLogoFilename,
-                CanvasElement.RETWEET_LOGO => RetweetLogoFilename,
+                CanvasElement.NETWORK_LOGO => NetworkLogoFilename,
+                CanvasElement.SHARE_LOGO => ShareLogoFilename,
                 CanvasElement.PROFILE_IMAGE => ProfileImageFilename,
                 _ => throw new Exception($"{nameof(canvasElement)} is not an image element."),
             };
@@ -230,10 +230,10 @@ namespace TextFormatter
                 CanvasElement.SUBHEADER => SubHeader,
                 CanvasElement.DISPLAY_NAME => DisplayName,
                 CanvasElement.USERNAME => Username,
-                CanvasElement.TEXT => TweetText,
-                CanvasElement.TIME => TweetTime,
-                CanvasElement.RETWEETER_DISPLAY_NAME => RetweeterDisplayName,
-                CanvasElement.RETWEETER_USERNAME => RetweeterUsername,
+                CanvasElement.TEXT => MessageText,
+                CanvasElement.TIME => Time,
+                CanvasElement.SHARER_DISPLAY_NAME => SharerDisplayName,
+                CanvasElement.SHARER_USERNAME => SharerUsername,
                 _ => throw new Exception($"{nameof(canvasElement)} is not a text element."),
             };
         }
@@ -267,20 +267,20 @@ namespace TextFormatter
                     UsernameRectangle = textLayoutRectangle;
                     break;
                 case CanvasElement.TEXT:
-                    tweetTextTextLayout = textLayoutResult;
-                    TweetTextRectangle = textLayoutRectangle;
+                    messageTextTextLayout = textLayoutResult;
+                    MessageTextRectangle = textLayoutRectangle;
                     break;
                 case CanvasElement.TIME:
                     timeTextLayout = textLayoutResult;
-                    TweetTimeRectangle = textLayoutRectangle;
+                    TimeRectangle = textLayoutRectangle;
                     break;
-                case CanvasElement.RETWEETER_DISPLAY_NAME:
-                    retweeterDisplayNameTextLayout = textLayoutResult;
-                    RetweeterDisplayNameRectangle = textLayoutRectangle;
+                case CanvasElement.SHARER_DISPLAY_NAME:
+                    sharerDisplayNameTextLayout = textLayoutResult;
+                    SharerDisplayNameRectangle = textLayoutRectangle;
                     break;
-                case CanvasElement.RETWEETER_USERNAME:
-                    retweeterUsernameTextLayout = textLayoutResult;
-                    RetweeterUsernameRectangle = textLayoutRectangle;
+                case CanvasElement.SHARER_USERNAME:
+                    sharerUsernameTextLayout = textLayoutResult;
+                    SharerUsernameRectangle = textLayoutRectangle;
                     break;
                 default:
                     throw new Exception($"{nameof(canvasElement)} is not a text element.");
@@ -295,10 +295,10 @@ namespace TextFormatter
                 CanvasElement.SUBHEADER => subHeaderTextLayout,
                 CanvasElement.DISPLAY_NAME => displayNameTextLayout,
                 CanvasElement.USERNAME => usernameTextLayout,
-                CanvasElement.TEXT => tweetTextTextLayout,
+                CanvasElement.TEXT => messageTextTextLayout,
                 CanvasElement.TIME => timeTextLayout,
-                CanvasElement.RETWEETER_DISPLAY_NAME => retweeterDisplayNameTextLayout,
-                CanvasElement.RETWEETER_USERNAME => retweeterUsernameTextLayout,
+                CanvasElement.SHARER_DISPLAY_NAME => sharerDisplayNameTextLayout,
+                CanvasElement.SHARER_USERNAME => sharerUsernameTextLayout,
                 _ => throw new Exception($"{nameof(canvasElement)} is not a text element."),
             };
         }
@@ -311,16 +311,16 @@ namespace TextFormatter
                 CanvasElement.HEADER => HeaderOriginPoint,
                 CanvasElement.SUBHEADER => SubHeaderOriginPoint,
                 CanvasElement.HEADING_SEPARATOR => new PointF() { X = HeadingSeparatorRectangle.Left, Y = HeadingSeparatorRectangle.Top },
-                CanvasElement.TWEET => TweetOriginPoint,
+                CanvasElement.MESSAGE => MessageOriginPoint,
                 CanvasElement.PROFILE_IMAGE => ProfileImageOriginPoint,
                 CanvasElement.DISPLAY_NAME => DisplayNameOriginPoint,
                 CanvasElement.USERNAME => UsernameOriginPoint,
-                CanvasElement.TEXT => TweetTextOriginPoint,
-                CanvasElement.TWITTER_LOGO => TwitterLogoOriginPoint,
-                CanvasElement.TIME => TweetTimeOriginPoint,
-                CanvasElement.RETWEET_LOGO => RetweetLogoOriginPoint,
-                CanvasElement.RETWEETER_DISPLAY_NAME => RetweeterDisplayNameOriginPoint,
-                CanvasElement.RETWEETER_USERNAME => RetweeterUsernameOriginPoint,
+                CanvasElement.TEXT => MessageTextOriginPoint,
+                CanvasElement.NETWORK_LOGO => NetworkLogoOriginPoint,
+                CanvasElement.TIME => TimeOriginPoint,
+                CanvasElement.SHARE_LOGO => ShareLogoOriginPoint,
+                CanvasElement.SHARER_DISPLAY_NAME => SharerDisplayNameOriginPoint,
+                CanvasElement.SHARER_USERNAME => SharerUsernameOriginPoint,
                 _ => throw new NotImplementedException($"{nameof(canvasElement)} is not a known element.")
             };
         }
@@ -333,16 +333,16 @@ namespace TextFormatter
                 CanvasElement.HEADER => HeaderRectangle,
                 CanvasElement.SUBHEADER => SubHeaderRectangle,
                 CanvasElement.HEADING_SEPARATOR => HeadingSeparatorRectangle,
-                CanvasElement.TWEET => TweetRectangle,
+                CanvasElement.MESSAGE => MessageRectangle,
                 CanvasElement.PROFILE_IMAGE => ProfileImageRectangle,
                 CanvasElement.DISPLAY_NAME => DisplayNameRectangle,
                 CanvasElement.USERNAME => UsernameRectangle,
-                CanvasElement.TEXT => TweetTextRectangle,
-                CanvasElement.TWITTER_LOGO => TwitterLogoRectangle,
-                CanvasElement.TIME => TweetTimeRectangle,
-                CanvasElement.RETWEET_LOGO => RetweetLogoRectangle,
-                CanvasElement.RETWEETER_DISPLAY_NAME => RetweeterDisplayNameRectangle,
-                CanvasElement.RETWEETER_USERNAME => RetweeterUsernameRectangle,
+                CanvasElement.TEXT => MessageTextRectangle,
+                CanvasElement.NETWORK_LOGO => NetworkLogoRectangle,
+                CanvasElement.TIME => TimeRectangle,
+                CanvasElement.SHARE_LOGO => ShareLogoRectangle,
+                CanvasElement.SHARER_DISPLAY_NAME => SharerDisplayNameRectangle,
+                CanvasElement.SHARER_USERNAME => SharerUsernameRectangle,
                 _ => throw new NotImplementedException($"{nameof(canvasElement)} is not a known element.")
             };
         }

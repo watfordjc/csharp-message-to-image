@@ -19,7 +19,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace TextFormatter
+namespace uk.JohnCook.dotnet.MessageToImage
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

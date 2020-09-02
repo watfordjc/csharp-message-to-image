@@ -599,4 +599,4 @@ namespace Direct2DWrapper
 		return hr;
 	}
 
-}
+} // namespace Direct2DWrapper

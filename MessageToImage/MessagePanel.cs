@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
-using TextFormatter.Interop;
+using uk.JohnCook.dotnet.MessageToImage.Interop;
 
-namespace TextFormatter
+namespace uk.JohnCook.dotnet.MessageToImage
 {
     public enum CanvasElement
     {

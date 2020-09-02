@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace TextFormatter
+namespace uk.JohnCook.dotnet.MessageToImage
 {
     /// <summary>
     /// Interaction logic for App.xaml

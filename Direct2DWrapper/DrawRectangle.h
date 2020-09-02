@@ -89,5 +89,5 @@ namespace Direct2DWrapper
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT SaveImage(struct Direct2DCanvas* pCanvas, PCWSTR filename);
-}
+} // namespace Direct2DWrapper
 

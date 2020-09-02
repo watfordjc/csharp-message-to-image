@@ -33,6 +33,15 @@ namespace Direct2DWrapper
 		struct Direct2DPointers Direct2DPointers;
 	};
 
+	struct FontSettings
+	{
+		float FontSize;
+		int FontWeight;
+		bool JustifyCentered;
+		PCWSTR FontName;
+		PCWSTR LocaleName;
+	};
+
 	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT CreateD2D1Factory(struct Direct2DPointers* pDirect2DPointers)
 	{
@@ -197,26 +206,21 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void DrawLine(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth)
+		void DrawLine(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, D2D1_POINT_2F HeadingSeparatorPoint1, D2D1_POINT_2F HeadingSeparatorPoint2, float lineThickness)
 	{
 		pCanvas->RenderTarget->DrawLine(
-			D2D1::Point2F(startX, startY),
-			D2D1::Point2F(stopX, stopY),
+			HeadingSeparatorPoint1,
+			HeadingSeparatorPoint2,
 			pD2D1SolidColorBrush,
-			lineWidth
+			lineThickness
 		);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void DrawRectangle(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY)
+		void DrawRectangle(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, D2D1_RECT_F bounds)
 	{
 		pCanvas->RenderTarget->FillRectangle(
-			D2D1::RectF(
-				startX,
-				startY,
-				startX + lengthX,
-				startY + lengthY
-			),
+			bounds,
 			pD2D1SolidColorBrush
 		);
 	}
@@ -281,7 +285,7 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT DrawImageFromFilename(struct Direct2DCanvas* pCanvas, PCWSTR filename, int startX, int startY, int width, int height)
+		HRESULT DrawImageFromFilename(struct Direct2DCanvas* pCanvas, PCWSTR filename, D2D1_POINT_2F originPoint, D2D1_RECT_F bounds)
 	{
 		IWICBitmapDecoder* pWICBitmapDecoder = NULL;
 		IWICBitmapFrameDecode* pWICBitmapFrameDecode = NULL;
@@ -349,8 +353,8 @@ namespace Direct2DWrapper
 		{
 			D2D1_SIZE_F originalSize = pD2D1Bitmap->GetSize();
 			D2D1_VECTOR_2F resizeVector = D2D1::Vector2F(
-				width / originalSize.width,
-				height / originalSize.height
+				bounds.right / originalSize.width,
+				bounds.bottom / originalSize.height
 			);
 			hr = pBitmapSourceEffect->SetValue(
 				D2D1_BITMAPSOURCE_PROP_SCALE,
@@ -368,13 +372,8 @@ namespace Direct2DWrapper
 		{
 			pD2D1DeviceContext->DrawImage(
 				pBitmapSourceEffect,
-				D2D1::Point2F(startX, startY),
-				D2D1::RectF(
-					0,
-					0,
-					width,
-					height
-				),
+				originPoint,
+				bounds,
 				D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC,
 				D2D1_COMPOSITE_MODE_SOURCE_OVER
 			);
@@ -405,15 +404,8 @@ namespace Direct2DWrapper
 		HRESULT CreateTextLayoutFromString(
 			struct Direct2DCanvas* pCanvas,
 			PCWSTR text,
-			int startX,
-			int startY,
-			float width,
-			float height,
-			bool justifyCentered,
-			PCWSTR fontName,
-			float fontSize,
-			int fontWeight,
-			PCWSTR localeName,
+			D2D1_RECT_F bounds,
+			struct FontSettings* fontSettings,
 			struct TextLayoutResult* textLayoutResult
 		)
 	{
@@ -428,31 +420,31 @@ namespace Direct2DWrapper
 		);
 
 		DWRITE_FONT_WEIGHT weight = DWRITE_FONT_WEIGHT_NORMAL;
-		if (fontWeight == 700) {
+		if (fontSettings->FontWeight == 700) {
 			weight = DWRITE_FONT_WEIGHT_BOLD;
 		}
-		else if (fontWeight == 600) {
+		else if (fontSettings->FontWeight == 600) {
 			weight = DWRITE_FONT_WEIGHT_SEMI_BOLD;
 		}
-		else if (fontWeight == 500) {
+		else if (fontSettings->FontWeight == 500) {
 			weight = DWRITE_FONT_WEIGHT_MEDIUM;
 		}
 		if (SUCCEEDED(hr))
 		{
 			IDWriteTextFormat* pDWriteTextFormat = NULL;
 			hr = pCanvas->Direct2DPointers.DirectWriteFactory->CreateTextFormat(
-				fontName,
+				fontSettings->FontName,
 				NULL,
 				weight,
 				DWRITE_FONT_STYLE_NORMAL,
 				DWRITE_FONT_STRETCH_NORMAL,
-				fontSize,
-				localeName,
+				fontSettings->FontSize,
+				fontSettings->LocaleName,
 				&pDWriteTextFormat
 			);
 			pDWriteTextFormat3 = (IDWriteTextFormat3*)pDWriteTextFormat;
 		}
-		if (SUCCEEDED(hr) && justifyCentered)
+		if (SUCCEEDED(hr) && fontSettings->JustifyCentered)
 		{
 			hr = pDWriteTextFormat3->SetTextAlignment(
 				DWRITE_TEXT_ALIGNMENT_CENTER
@@ -460,8 +452,8 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			textLayoutResult->lineSpacing = fontSize * 1.3f;
-			textLayoutResult->baseline = fontSize * 0.8f;
+			textLayoutResult->lineSpacing = fontSettings->FontSize * 1.3f;
+			textLayoutResult->baseline = fontSettings->FontSize * 0.8f;
 			hr = pDWriteTextFormat3->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_DEFAULT, textLayoutResult->lineSpacing, textLayoutResult->baseline);
 		}
 		if (SUCCEEDED(hr))
@@ -471,8 +463,8 @@ namespace Direct2DWrapper
 				text,
 				len,
 				pDWriteTextFormat3,
-				width,
-				height,
+				bounds.right,
+				bounds.bottom,
 				&pDWriteTextLayout
 			);
 			textLayoutResult->pDWriteTextLayout = (IDWriteTextLayout4*)pDWriteTextLayout;
@@ -493,9 +485,9 @@ namespace Direct2DWrapper
 		{
 			hr = textLayoutResult->pDWriteTextLayout->GetMetrics(&metrics);
 			textLayoutResult->lineCount = metrics.lineCount;
-			textLayoutResult->top = startY + (double)metrics.top;
+			textLayoutResult->top = (double)metrics.top;
 			textLayoutResult->height = max(metrics.heightIncludingTrailingWhitespace, 0) > 0 ? (double)metrics.heightIncludingTrailingWhitespace : (double)metrics.height;
-			textLayoutResult->left = startX + (double)metrics.left;
+			textLayoutResult->left = (double)metrics.left;
 			textLayoutResult->width = max(metrics.widthIncludingTrailingWhitespace, 0) > 0 ? (double)metrics.widthIncludingTrailingWhitespace : (double)metrics.width;
 		}
 		SafeRelease(&pDWriteTextFormat3);
@@ -504,7 +496,7 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT DrawTextLayout(struct Direct2DCanvas* pCanvas, struct TextLayoutResult* textLayoutResult, int startX, int startY, ID2D1SolidColorBrush* pSolidColorBrush)
+		HRESULT DrawTextLayout(struct Direct2DCanvas* pCanvas, struct TextLayoutResult* textLayoutResult, D2D1_POINT_2F originPoint, ID2D1SolidColorBrush* pD2D1SolidColorBrush)
 	{
 		ID2D1DeviceContext4* pD2D1DeviceContext = NULL;
 
@@ -515,9 +507,9 @@ namespace Direct2DWrapper
 		if (SUCCEEDED(hr))
 		{
 			pD2D1DeviceContext->DrawTextLayout(
-				D2D1::Point2F(startX, startY),
+				originPoint,
 				textLayoutResult->pDWriteTextLayout,
-				pSolidColorBrush,
+				pD2D1SolidColorBrush,
 				D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT
 			);
 			pD2D1DeviceContext->Release();

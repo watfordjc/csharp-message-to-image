@@ -61,10 +61,10 @@ namespace Direct2DWrapper
 		void DrawRectangleBorder(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY, float lineWidth);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void DrawLine(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth);
+		void DrawLine(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, D2D1_POINT_2F HeadingSeparatorPoint1, D2D1_POINT_2F HeadingSeparatorPoint2, float lineThickness);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void DrawRectangle(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY);
+		void DrawRectangle(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, D2D1_RECT_F bounds);
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT PushEllipseLayer(struct Direct2DCanvas* pCanvas, ID2D1SolidColorBrush* pD2D1SolidColorBrush, float centerX, float centerY, float radiusX, float radiusY);
@@ -73,13 +73,13 @@ namespace Direct2DWrapper
 		HRESULT PopLayer(struct Direct2DCanvas* pCanvas);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT DrawImageFromFilename(struct Direct2DCanvas* pCanvas, PCWSTR filename, int startX, int startY, int width, int height);
+		HRESULT DrawImageFromFilename(struct Direct2DCanvas* pCanvas, PCWSTR filename, D2D1_POINT_2F originPoint, D2D1_RECT_F bounds);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT CreateTextLayoutFromString(struct Direct2DCanvas* pCanvas, PCWSTR text, int startX, int startY, float width, float height, bool justifyCentered, PCWSTR fontName, float fontSize, int fontWeight, PCWSTR localeName, struct TextLayoutResult* textLayoutResult);
+		HRESULT CreateTextLayoutFromString(struct Direct2DCanvas* pCanvas, PCWSTR text, D2D1_RECT_F bounds, struct FontSettings* fontSettings, struct TextLayoutResult* textLayoutResult);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT DrawTextLayout(struct Direct2DCanvas* pCanvas, struct TextLayoutResult* textLayoutResult, int startX, int startY, ID2D1SolidColorBrush* pD2D1SolidColorBrush);
+		HRESULT DrawTextLayout(struct Direct2DCanvas* pCanvas, struct TextLayoutResult* textLayoutResult, D2D1_POINT_2F originPoint, ID2D1SolidColorBrush* pD2D1SolidColorBrush);
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		void ReleaseTextLayout(struct TextLayoutResult* textLayoutResult);

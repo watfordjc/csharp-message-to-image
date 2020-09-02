@@ -31,17 +31,9 @@ namespace TextFormatter
         /// </summary>
         private Interop.Direct2DPointers direct2DPointers = new Interop.Direct2DPointers();
         /// <summary>
-        /// An IWICBitmap/ID2D1RenderTarget pair is our "canvas"
-        /// </summary>
-        private Interop.Direct2DCanvas direct2DCanvas = new Interop.Direct2DCanvas();
-        /// <summary>
         /// Temporary way of storing pointers for ID2D1SolidColorBrush - haven't worked out a suitable COM Interop way yet
         /// </summary>
         private readonly Dictionary<string, IntPtr> brushes = new Dictionary<string, IntPtr>();
-        /// <summary>
-        /// Temporary way of storing canvas size - haven't worked out how to store in direct2DCanvas yet
-        /// </summary>
-        private System.Drawing.Size canvasSize = new System.Drawing.Size();
         private bool disposedValue;
 
         public MainWindow()
@@ -74,30 +66,6 @@ namespace TextFormatter
             }
         }
 
-        /// <summary>
-        /// Create pointers for IWICBitmap and ID2D1RenderTarget, and set the canvas size
-        /// </summary>
-        /// <param name="width">Desired bitmap width in pixels</param>
-        /// <param name="height">Desired bitmap height in pixels</param>
-        private void CreateDirect2DCanvas(uint width, uint height)
-        {
-            Exception ex1;
-            bool noErrors = true;
-            canvasSize = new System.Drawing.Size()
-            {
-                Width = (int)width,
-                Height = (int)height
-            };
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateWICBitmap(ref direct2DPointers, (uint)canvasSize.Width, (uint)canvasSize.Height, ref direct2DCanvas));
-            noErrors = noErrors && ex1 == null;
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateRenderTarget(ref direct2DCanvas));
-            noErrors = noErrors && ex1 == null;
-            if (!noErrors)
-            {
-                throw new Exception($"Error during {nameof(CreateDirect2DCanvas)}.");
-            }
-        }
-
         private void MainWindow_ContentRendered(object sender, EventArgs e)
         {
             try
@@ -105,22 +73,13 @@ namespace TextFormatter
                 // Create the Direct2D factories
                 CreateDirect2DPointers();
                 // Create the Direct2D bitmap and render target
-                CreateDirect2DCanvas(1280, 3408);
-                // Draw and save the image
-                if (DrawAndSaveImage() == ReturnCode.LOST_D2D1_RENDER_TARGET)
-                {
-                    Trace.WriteLine("Attempting to recreate render target.");
-                    Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.CreateRenderTarget(ref direct2DCanvas));
-                    if (DrawAndSaveImage() != ReturnCode.SUCCESS)
-                    {
-                        Trace.WriteLine("Failed to draw image and save it.");
-                    }
-                }
+                Models.TweetPanel verticalTweetPanel = CreateVerticalTweetPanel();
+                DrawVerticalTweet(verticalTweetPanel);
                 // We're not reusing the render target
-                Interop.UnsafeNativeMethods.ReleaseRenderTarget(direct2DCanvas);
+                //Interop.UnsafeNativeMethods.ReleaseRenderTarget(verticalTweetPanel.Direct2DCanvas);
                 // We're not reusing the bitmap
-                Interop.UnsafeNativeMethods.ReleaseWICBitmap(direct2DCanvas);
-                // Direct2D pointers are cleaned up in finalizer
+                //Interop.UnsafeNativeMethods.ReleaseWICBitmap(verticalTweetPanel.Direct2DCanvas);
+                // Direct2D pointers are cleaned up in finalizer*/
             }
             catch (COMException ce)
             {
@@ -142,10 +101,10 @@ namespace TextFormatter
         /// <summary>
         /// Create pointers for each ID2D1SolidColorBrush and store in dictionary
         /// </summary>
-        private void CreateBrushes()
+        private void CreateBrushes(Interop.Direct2DCanvas direct2DCanvas)
         {
             brushes["borderBrush"] = Interop.UnsafeNativeMethods.CreateSolidColorBrush(direct2DCanvas, (uint)System.Drawing.Color.DarkGray.ToArgb());
-            brushes["backgroundBrush"] = Interop.UnsafeNativeMethods.CreateSolidColorBrush(direct2DCanvas, (uint)System.Drawing.Color.Orange.ToArgb());
+            brushes["backgroundBrush"] = Interop.UnsafeNativeMethods.CreateSolidColorBrush(direct2DCanvas, (uint)System.Drawing.Color.Black.ToArgb());
             brushes["disablePixelBrush"] = Interop.UnsafeNativeMethods.CreateSolidColorBrush(direct2DCanvas, 0xFF00FFFF);
             brushes["enablePixelBrush"] = Interop.UnsafeNativeMethods.CreateSolidColorBrush(direct2DCanvas, 0xFF00FF00);
             brushes["textBrush"] = Interop.UnsafeNativeMethods.CreateSolidColorBrush(direct2DCanvas, 0xFFFFFFFF);
@@ -170,260 +129,373 @@ namespace TextFormatter
             brushes.Clear();
         }
 
-        /// <summary>
-        /// Draw a IDWriteTextLayout to the screen
-        /// </summary>
-        /// <param name="textLayout">A TextLayoutResult containing a pointer to an IDWriteTextLayout</param>
-        /// <param name="startX">The x coordinate of the first pixel</param>
-        /// <param name="startY">The y coordinate of the first pixel</param>
-        /// <param name="colorBrush">A pointer to an ID2D1SolidColorBrush for the text colour</param>
-        /// <param name="releaseLayout">If true, releases the IDWriteTextLayout when done</param>
-        private void DrawText(Interop.TextLayoutResult textLayout, int startX, int startY, IntPtr colorBrush, bool releaseLayout)
+        private Models.TweetPanel CreateVerticalTweetPanel()
         {
-            Trace.Assert(startX >= 0, $"{nameof(startX)} is less than zero. Value: {startX}");
-            Trace.Assert(startY >= 0, $"{nameof(startY)} is less than zero. Value: {startY}");
-            Interop.UnsafeNativeMethods.DrawTextLayout(direct2DCanvas, textLayout, startX, startY, colorBrush);
-            // Memory leak: following code commented due to COMException, need to investigate
-            //if (releaseLayout)
-            //{
-            //    Interop.UnsafeNativeMethods.ReleaseTextLayout(textLayout);
-            //}
-        }
+            Exception ex1;
 
-        /// <summary>
-        /// Draw an image and then save it to a file
-        /// </summary>
-        /// <returns>A ReturnCode enum value</returns>
-        private ReturnCode DrawAndSaveImage()
-        {
-            Exception ex1, ex2;
+            VerticalTweetPanel verticalTweetPanel = new VerticalTweetPanel(
+                direct2DPointers: ref direct2DPointers,
+                canvasSize: new Models.SizeU() { Width = 1280, Height = 3408 },
+                backgroundcolor: (uint)System.Drawing.Color.Black.ToArgb()
+                );
 
-            #region Draw Image
-            Interop.UnsafeNativeMethods.BeginDraw(direct2DCanvas);
-            Interop.UnsafeNativeMethods.DrawImage(direct2DCanvas, (uint)System.Drawing.Color.Black.ToArgb());
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(direct2DCanvas));
+            #region Set strings for header
+            verticalTweetPanel.Header = "UK Tweets";
+            verticalTweetPanel.SubHeader = "Tweets and Retweets from UK Resiliency Twitter Accounts";
+            #endregion
+
+            #region Set filenames and image sizes for resources
+            verticalTweetPanel.SetImage(
+                Models.CanvasElement.TWITTER_LOGO,
+                @"C:/Users/John/Pictures/Twitch/Twitter_Logo_Blue.png",
+                240.0f,
+                240.0f
+                );
+            verticalTweetPanel.SetImage(
+                Models.CanvasElement.RETWEET_LOGO,
+                @"C:/Users/John/Pictures/Twitch/Twitter_Retweet.png",
+                240.0f - 100.0f,
+                240.0f - 100.0f
+                );
+            #endregion
+
+            #region Set Fonts
+            verticalTweetPanel.SetFont(Models.CanvasElement.HEADER, new Models.FontSettings()
+            {
+                FontName = "Noto Sans",
+                FontSize = 104.0f,
+                FontWeight = 700,
+                LocaleName = "en-GB",
+                JustifyCentered = true
+            });
+            verticalTweetPanel.SetFont(Models.CanvasElement.SUBHEADER, new Models.FontSettings()
+            {
+                FontName = "Noto Sans",
+                FontSize = 74.0f,
+                FontWeight = 500,
+                LocaleName = "en-GB",
+                JustifyCentered = true
+            });
+            verticalTweetPanel.SetFont(Models.CanvasElement.DISPLAY_NAME, new Models.FontSettings()
+            {
+                FontName = "Noto Sans",
+                FontSize = 88.0f,
+                FontWeight = 700,
+                LocaleName = "en-GB"
+            });
+            verticalTweetPanel.SetFont(Models.CanvasElement.USERNAME, new Models.FontSettings()
+            {
+                FontName = "Noto Sans",
+                FontSize = 88.0f,
+                FontWeight = 500,
+                LocaleName = "en-GB"
+            });
+            verticalTweetPanel.SetFont(Models.CanvasElement.TEXT, new Models.FontSettings()
+            {
+                FontName = "Segoe UI Emoji",
+                FontSize = 90.0f,
+                FontWeight = 700,
+                LocaleName = "en-GB"
+            });
+            verticalTweetPanel.SetFont(Models.CanvasElement.TIME, new Models.FontSettings()
+            {
+                FontName = "Noto Sans",
+                FontSize = verticalTweetPanel.TwitterLogoRectangle.Bottom / 3,
+                FontWeight = 700,
+                LocaleName = "en-GB"
+            });
+            verticalTweetPanel.SetFont(Models.CanvasElement.RETWEETER_DISPLAY_NAME, new Models.FontSettings()
+            {
+                FontName = "Noto Sans",
+                FontSize = verticalTweetPanel.TwitterLogoRectangle.Bottom / 3,
+                FontWeight = 700,
+                LocaleName = "en-GB"
+            });
+            verticalTweetPanel.SetFont(Models.CanvasElement.RETWEETER_USERNAME, new Models.FontSettings()
+            {
+                FontName = "Noto Sans",
+                FontSize = verticalTweetPanel.TwitterLogoRectangle.Bottom / 3,
+                FontWeight = 500,
+                LocaleName = "en-GB"
+            });
+            #endregion
+
+            #region Draw canvas with header
+
+            #region Start drawing to canvas
+            Interop.UnsafeNativeMethods.BeginDraw(verticalTweetPanel.Direct2DCanvas);
+            #endregion
+
+            #region Create brushes
+            CreateBrushes(verticalTweetPanel.Direct2DCanvas);
+            #endregion
+
+            #region Draw Heading
+            verticalTweetPanel.HeaderOriginPoint = new Models.PointF() {
+                X = 40.0f,
+                Y = 40.0f
+            };
+            verticalTweetPanel.CreateTextLayout(Models.CanvasElement.HEADER, new Models.RectF()
+            {
+                Left = 0.0f,
+                Top = 0.0f,
+                Right = verticalTweetPanel.PanelRectangle.Width - (verticalTweetPanel.HeaderOriginPoint.X * 2),
+                Bottom = verticalTweetPanel.PanelRectangle.Height - (verticalTweetPanel.HeaderOriginPoint.Y * 2)
+            });
+            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.HEADER, brushes["textBrush"]);
+            #endregion
+
+            #region Draw SubHeading
+            verticalTweetPanel.SubHeaderOriginPoint = new Models.PointF() {
+                X = 40.0f,
+                Y = verticalTweetPanel.HeaderOriginPoint.Y + verticalTweetPanel.HeaderRectangle.Bottom
+            };
+            verticalTweetPanel.CreateTextLayout(Models.CanvasElement.SUBHEADER, new Models.RectF()
+            {
+                Left = 0.0f,
+                Top = 0.0f,
+                Right = verticalTweetPanel.PanelRectangle.Width - (verticalTweetPanel.SubHeaderOriginPoint.X * 2),
+                Bottom = verticalTweetPanel.PanelRectangle.Height - (verticalTweetPanel.SubHeaderOriginPoint.Y * 2)
+            });
+            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.SUBHEADER, brushes["textBrush"]);
+            #endregion
+
+            #region Draw Heading Separator
+            verticalTweetPanel.HeadingSeparatorPoint1 = new Models.PointF() {
+                X = 40.0f,
+                Y = verticalTweetPanel.SubHeaderOriginPoint.Y + verticalTweetPanel.SubHeaderRectangle.Bottom + 60.0f
+            };
+            verticalTweetPanel.HeadingSeparatorPoint2 = new Models.PointF()
+            {
+                X = verticalTweetPanel.PanelRectangle.Width - (verticalTweetPanel.HeadingSeparatorPoint1.X * 2),
+                Y = verticalTweetPanel.HeadingSeparatorPoint1.Y
+            };
+            verticalTweetPanel.DrawHeadingSeparator(brushes["textBrush"], 8.0f);
+            #endregion
+
+            #region Finish drawing to canvas
+            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(verticalTweetPanel.Direct2DCanvas));
             if (ex1 != null)
             {
-                return ReturnCode.LOST_D2D1_RENDER_TARGET;
+                Debugger.Break();
+                throw ex1;
             }
             #endregion
 
-            #region Create Brushes
-            CreateBrushes();
-            #endregion
-
-            #region Draw a filled rectangle
-            //Interop.UnsafeNativeMethods.BeginDraw(canvas);
-            //Interop.UnsafeNativeMethods.DrawRectangle(canvas, brushes["disablePixelBrush"], centredTopLeft.X + borderWidth, centredTopLeft.Y + borderWidth, rectangleDimensions.Width, rectangleDimensions.Height);
-            //ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(canvas));
-            //if (ex1 != null)
-            //{
-            //    ReleaseBrushes();
-            //    return ReturnCode.LOST_D2D1_RENDER_TARGET;
-            //}
-            #endregion
-
-            #region Draw heading, subheading, and separator
-            Interop.UnsafeNativeMethods.BeginDraw(direct2DCanvas);
-            float startY = 40.0f;
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(direct2DCanvas, "UK Tweets", 40, (int)Math.Round(startY), canvasSize.Width - 80, canvasSize.Height - startY, true, "Noto Sans", 104.0f, 700, "en-GB", out Interop.TextLayoutResult currentTextResult));
-            if (ex1 == null)
+            #region Set Tweet area relative to canvas
+            verticalTweetPanel.TweetOriginPoint = new Models.PointF()
             {
-                DrawText(currentTextResult, 40, (int)Math.Round(startY), brushes["textBrush"], true);
-                startY += (float)currentTextResult.height;
+                X = 40.0f,
+                Y = verticalTweetPanel.HeadingSeparatorRectangle.Bottom + 90.0f
+            };
+            verticalTweetPanel.TweetRectangle = new Models.RectF()
+            {
+                Left = 0,
+                Top = 0,
+                Right = verticalTweetPanel.PanelRectangle.Width - (verticalTweetPanel.TweetOriginPoint.X * 2),
+                Bottom = verticalTweetPanel.PanelRectangle.Height - verticalTweetPanel.TweetOriginPoint.Y
+            };
+            #endregion
+
+            #region Set Tweet profile image area relative to canvas
+            int borderWidth = 0;
+            verticalTweetPanel.ProfileImageOriginPoint = new Models.PointF()
+            {
+                X = 60 - borderWidth,
+                Y = verticalTweetPanel.TweetOriginPoint.Y - borderWidth
+            };
+            verticalTweetPanel.ProfileImageRectangle = new Models.RectF()
+            {
+                Left = 0.0f,
+                Top = 0.0f,
+                Right = 240.0f,
+                Bottom = 240.0f
+            };
+            #endregion
+
+            #region Set display name origin point relative to canvas
+            verticalTweetPanel.DisplayNameOriginPoint = new Models.PointF()
+            {
+                X = (verticalTweetPanel.ProfileImageOriginPoint.X * 2) + verticalTweetPanel.ProfileImageRectangle.Right,
+                Y = verticalTweetPanel.ProfileImageOriginPoint.Y
+            };
+            #endregion
+
+            #endregion
+
+            return verticalTweetPanel;
+        }
+
+        private void DrawVerticalTweet(Models.TweetPanel verticalTweetPanel)
+        {
+            verticalTweetPanel.ClearArea(verticalTweetPanel.TweetOriginPoint, verticalTweetPanel.TweetRectangle, brushes["backgroundBrush"], true, true);
+
+            #region Profile image
+            // TODO: Set ProfileImageFilename
+            verticalTweetPanel.SetImage(
+                Models.CanvasElement.PROFILE_IMAGE,
+                @"C:\JohnDocs\tmp2\Computing\Web Sites\image manipulation\shaving_250px_square.png",
+                240.0f,
+                240.0f
+                );
+
+            // TODO: Create and draw round profile image
+            verticalTweetPanel.PushCircleLayer(Models.CanvasElement.PROFILE_IMAGE, brushes["enablePixelBrush"]);
+            verticalTweetPanel.DrawImage(Models.CanvasElement.PROFILE_IMAGE);
+            verticalTweetPanel.PopLayer();
+            #endregion
+
+            #region Start drawing to canvas
+            Interop.UnsafeNativeMethods.BeginDraw(verticalTweetPanel.Direct2DCanvas);
+            #endregion
+
+            #region Display name and username
+            // TODO: Get DisplayName and set DisplayNameRectangle
+            verticalTweetPanel.DisplayName = "John Cook";
+            verticalTweetPanel.CreateTextLayout(Models.CanvasElement.DISPLAY_NAME, new Models.RectF()
+            {
+                Left = 0.0f,
+                Top = 0.0f,
+                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.ProfileImageRectangle.Right,
+                Bottom = verticalTweetPanel.ProfileImageRectangle.Bottom / 2
+            });
+            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.SUBHEADER, brushes["textBrush"]);
+            
+            // TODO: Get Username and set UsernameRectangle
+            verticalTweetPanel.Username = "@WatfordJC";
+            verticalTweetPanel.CreateTextLayout(Models.CanvasElement.USERNAME, new Models.RectF()
+            {
+                Left = 0.0f,
+                Top = 0.0f,
+                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.ProfileImageRectangle.Right,
+                Bottom = verticalTweetPanel.ProfileImageRectangle.Bottom / 2
+            });
+
+            // TODO: Calculate and set DisplayNameOriginPoint and UsernameOriginPoint
+            if (verticalTweetPanel.ProfileImageRectangle.Bottom / 2 >= verticalTweetPanel.DisplayNameRectangle.Bottom)
+            {
+                verticalTweetPanel.UsernameOriginPoint = new Models.PointF()
+                {
+                    X = verticalTweetPanel.DisplayNameOriginPoint.X,
+                    Y = verticalTweetPanel.TweetOriginPoint.Y + (verticalTweetPanel.ProfileImageRectangle.Bottom / 2)
+                };
             }
             else
             {
+                verticalTweetPanel.UsernameOriginPoint = new Models.PointF()
+                {
+                    X = verticalTweetPanel.DisplayNameOriginPoint.X,
+                    Y = verticalTweetPanel.UsernameOriginPoint.Y + verticalTweetPanel.DisplayNameRectangle.Bottom
+                };
+            }
+            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.DISPLAY_NAME, brushes["textBrush"]);
+            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.USERNAME, brushes["textBrush"]);
+            #endregion
+
+            #region Tweet text
+            // TODO: Get TweetText and set TweetTextRectangle
+            verticalTweetPanel.TweetText = "File -> New -> 1280x3600 -> Save As -> Something.PNG. You'd think creating a blank PNG in Direct2D wouldn't involve that much learning, but it is day 3 and I think I'm now drawing a blank canvas with a white background off screen. A rectangle in 6 steps sounded way too easy.";
+            verticalTweetPanel.CreateTextLayout(Models.CanvasElement.TEXT, new Models.RectF()
+            {
+                Left = 0.0f,
+                Top = 0.0f,
+                Right = verticalTweetPanel.TweetRectangle.Right,
+                Bottom = verticalTweetPanel.TweetRectangle.Bottom - verticalTweetPanel.UsernameRectangle.Bottom
+            });
+            // TODO: Calculate and set TweetTextOriginPoint
+            verticalTweetPanel.TweetTextOriginPoint = new Models.PointF()
+            {
+                X = verticalTweetPanel.TweetOriginPoint.X,
+                Y = verticalTweetPanel.ProfileImageOriginPoint.Y + Math.Max(verticalTweetPanel.ProfileImageRectangle.Bottom, verticalTweetPanel.UsernameRectangle.Bottom) + 90.0f
+            };
+            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.TEXT, brushes["textBrush"]);
+            #endregion
+
+            #region Twitter logo and time
+            // TODO: Calculate and set TwitterLogoOriginPoint
+            verticalTweetPanel.TwitterLogoOriginPoint = new Models.PointF()
+            {
+                X = verticalTweetPanel.TweetOriginPoint.X,
+                Y = verticalTweetPanel.TweetTextOriginPoint.Y + verticalTweetPanel.TweetTextRectangle.Bottom + 60.0f
+            };
+            verticalTweetPanel.DrawImage(Models.CanvasElement.TWITTER_LOGO);
+
+            // TODO: Get TweetTime and set TweetTimeRectangle
+            verticalTweetPanel.TweetTime = "August 27th 2020";
+            verticalTweetPanel.CreateTextLayout(Models.CanvasElement.TIME, new Models.RectF()
+            {
+                Left = 0.0f,
+                Top = 0.0f,
+                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.TwitterLogoRectangle.Right,
+                Bottom = verticalTweetPanel.TwitterLogoRectangle.Bottom
+            });
+
+            // TODO: Calculate and set TweetTimeOriginPoint
+            verticalTweetPanel.TweetTimeOriginPoint = new Models.PointF()
+            {
+                X = verticalTweetPanel.TweetOriginPoint.X + verticalTweetPanel.TwitterLogoRectangle.Right,
+                Y = verticalTweetPanel.TweetTimeRectangle.Bottom < verticalTweetPanel.TwitterLogoRectangle.Bottom
+                    ? verticalTweetPanel.TwitterLogoOriginPoint.Y + ((verticalTweetPanel.TwitterLogoRectangle.Bottom - verticalTweetPanel.TweetTimeRectangle.Bottom) / 2)
+                    : verticalTweetPanel.TwitterLogoOriginPoint.Y
+            };
+            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.TIME, brushes["textBrush"]);
+            #endregion
+
+            #region Retweet logo and Retweeter display name & username
+            // TODO: Calculate and set RetweetLogoOriginPoint
+            verticalTweetPanel.RetweetLogoOriginPoint = new Models.PointF()
+            {
+                X = verticalTweetPanel.TweetOriginPoint.X + 50.0f,
+                Y = verticalTweetPanel.TwitterLogoOriginPoint.Y + Math.Max(verticalTweetPanel.TwitterLogoRectangle.Bottom, verticalTweetPanel.TweetTimeRectangle.Bottom) + 50.0f
+            };
+            verticalTweetPanel.DrawImage(Models.CanvasElement.RETWEET_LOGO);
+
+            // TODO: Get RetweeterDisplayName and set RetweeterDisplayNameRectangle
+            verticalTweetPanel.RetweeterDisplayName = "Nobody";
+            verticalTweetPanel.CreateTextLayout(Models.CanvasElement.RETWEETER_DISPLAY_NAME, new Models.RectF()
+            {
+                Left = 0.0f,
+                Top = 0.0f,
+                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.RetweetLogoRectangle.Right - 100.0f,
+                Bottom = verticalTweetPanel.RetweetLogoRectangle.Bottom
+            });
+            // TODO: Calculate and set RetweeterDisplayNameOriginPoint
+            verticalTweetPanel.RetweeterDisplayNameOriginPoint = new Models.PointF()
+            {
+                X = verticalTweetPanel.TweetOriginPoint.X + verticalTweetPanel.RetweetLogoRectangle.Right + 100.0f,
+                Y = verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom < verticalTweetPanel.RetweetLogoRectangle.Bottom
+                    ? verticalTweetPanel.RetweetLogoOriginPoint.Y + ((verticalTweetPanel.RetweetLogoRectangle.Bottom - verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom) / 2)
+                    : verticalTweetPanel.RetweetLogoOriginPoint.Y
+            };
+
+            // TODO: Get RetweeterUsername and set RetweeterUsernameRectangle
+            verticalTweetPanel.RetweeterUsername = "(@search)";
+            verticalTweetPanel.CreateTextLayout(Models.CanvasElement.RETWEETER_USERNAME, new Models.RectF()
+            {
+                Left = 0.0f,
+                Top = 0.0f,
+                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.RetweetLogoRectangle.Right,
+                Bottom = verticalTweetPanel.RetweetLogoRectangle.Bottom
+            });
+            // TODO: Calculate and set RetweeterUsernameOriginPoint
+            verticalTweetPanel.RetweeterUsernameOriginPoint = new Models.PointF()
+            {
+                X = verticalTweetPanel.RetweeterDisplayNameOriginPoint.X,
+                Y = verticalTweetPanel.RetweetLogoOriginPoint.Y + Math.Max(verticalTweetPanel.RetweetLogoRectangle.Bottom, verticalTweetPanel.RetweeterDisplayNameRectangle.Bottom)
+            };
+            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.RETWEETER_DISPLAY_NAME, brushes["textBrush"]);
+            verticalTweetPanel.DrawTextLayout(Models.CanvasElement.RETWEETER_USERNAME, brushes["textBrush"]);
+            #endregion
+
+            #region Finish drawing to canvas
+            Exception ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(verticalTweetPanel.Direct2DCanvas));
+            if (ex1 != null)
+            {
                 Debugger.Break();
-            }
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(direct2DCanvas, "Tweets and Retweets from UK Resiliency Twitter Accounts", 40, (int)(Math.Round(startY)), canvasSize.Width - 80, canvasSize.Height - startY, true, "Noto Sans", 74.0f, 500, "en-GB", out currentTextResult));
-            if (ex1 == null)
-            {
-                DrawText(currentTextResult, 40, (int)Math.Round(startY), brushes["textBrush"], true);
-                startY += (float)currentTextResult.height;
-            }
-            startY += 60;
-            Interop.UnsafeNativeMethods.DrawLine(direct2DCanvas, brushes["textBrush"], 40, (int)(Math.Round(startY)), (int)canvasSize.Width - 40, (int)(Math.Round(startY)), 8.0f);
-            startY += 90;
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(direct2DCanvas));
-            if (ex1 != null)
-            {
-                return ReturnCode.LOST_D2D1_RENDER_TARGET;
+                throw ex1;
             }
             #endregion
-
-            #region Draw rectangular border
-            System.Drawing.Size rectangleDimensions = new System.Drawing.Size(240, 240);
-            int borderWidth = 0;
-            System.Drawing.Point centredTopLeft = new System.Drawing.Point()
-            {
-                X = 60 - borderWidth,
-                Y = (int)(Math.Round(startY)) - borderWidth
-            };
-            if ((canvasSize.Width - rectangleDimensions.Width) % 2 == 0 && borderWidth % 2 == 0)
-            {
-                Trace.WriteLine("Rectangle cannot be centred horizontally: off by 0.5 pixels.");
-            }
-            if ((canvasSize.Height - rectangleDimensions.Height) % 2 == 0 && borderWidth % 2 == 0)
-            {
-                Trace.WriteLine("Rectangle cannot be centred vertically: off by 0.5 pixels.");
-            }
-            Interop.UnsafeNativeMethods.BeginDraw(direct2DCanvas);
-            Interop.UnsafeNativeMethods.DrawRectangleBorder(direct2DCanvas, brushes["borderBrush"], centredTopLeft.X, centredTopLeft.Y, rectangleDimensions.Width, rectangleDimensions.Height, borderWidth);
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(direct2DCanvas));
-            if (ex1 != null)
-            {
-                ReleaseBrushes();
-                return ReturnCode.LOST_D2D1_RENDER_TARGET;
-            }
-            #endregion
-
-            #region Push a circle layer that will mask a profile image
-            System.Drawing.Point centerPointForEllipse = new System.Drawing.Point()
-            {
-                X = (centredTopLeft.X + borderWidth) + (rectangleDimensions.Width / 2),
-                Y = (centredTopLeft.Y + borderWidth) + (rectangleDimensions.Height / 2)
-            };
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.PushEllipseLayer(direct2DCanvas, brushes["enablePixelBrush"], centerPointForEllipse.X, centerPointForEllipse.Y, rectangleDimensions.Width / 2, rectangleDimensions.Height / 2));
-            if (ex1 != null)
-            {
-                ReleaseBrushes();
-                return ReturnCode.LOST_D2D1_RENDER_TARGET;
-            }
-            #endregion
-            #region Draw a profile image
-            string profileImageFilename = @"C:\JohnDocs\tmp2\Computing\Web Sites\image manipulation\shaving_250px_square.png";
-            //string profileImageFilename = @"G:\Program Files (x86)\mIRC\twimg\DerbyshireFRS.jpg";
-            try
-            {
-                Interop.UnsafeNativeMethods.DrawImageFromFilename(direct2DCanvas, profileImageFilename, centredTopLeft.X + borderWidth, centredTopLeft.Y + borderWidth, rectangleDimensions.Width, rectangleDimensions.Height);
-            }
-            catch (FileNotFoundException e)
-            {
-                Trace.WriteLine($"Error reading file {profileImageFilename}: {e.Message} - {e.InnerException?.Message}");
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"And error occurred reading file {profileImageFilename}: {ex.Message} - {ex.InnerException?.Message}");
-            }
-            #endregion
-            #region Draw an emoji instead of a profile image
-            //Interop.UnsafeNativeMethods.DrawTextFromString(canvas, "🪒", centredTopLeft.X, centredTopLeft.Y, rectangleDimensions.Width, rectangleDimensions.Height, true, "Segoe UI Emoji", (float)(512 / pixelMultiplier), "en-GB", brushes["borderBrush"]);
-            #endregion
-            #region Pop the circle layer mask
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.PopLayer(direct2DCanvas));
-            if (ex1 != null)
-            {
-                ReleaseBrushes();
-                return ReturnCode.LOST_D2D1_RENDER_TARGET;
-            }
-            #endregion
-
-            #region Draw display name and username
-            Interop.UnsafeNativeMethods.BeginDraw(direct2DCanvas);
-            //Canvas is in pixels, fonts are in DIPs
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(direct2DCanvas, "John Cook", (centredTopLeft.X * 2) + rectangleDimensions.Width, centredTopLeft.Y + borderWidth, canvasSize.Width - (centredTopLeft.X * 2) - rectangleDimensions.Width, (rectangleDimensions.Height - borderWidth) / 2, false, "Noto Sans", 88.0f, 700, "en-GB", out Interop.TextLayoutResult displayNameTextLayout));
-            ex2 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(direct2DCanvas, "@WatfordJC", (centredTopLeft.X * 2) + rectangleDimensions.Width, centredTopLeft.Y + borderWidth, canvasSize.Width - (centredTopLeft.X * 2) - rectangleDimensions.Width, (rectangleDimensions.Height - borderWidth) / 2, false, "Noto Sans", 88.0f, 500, "en-GB", out Interop.TextLayoutResult usernameTextLayout));
-            if (ex1 == null && ex2 == null)
-            {
-                if (rectangleDimensions.Height / 2 >= displayNameTextLayout.height)
-                {
-                    usernameTextLayout.top = centredTopLeft.Y + borderWidth + (rectangleDimensions.Height / 2);
-                }
-                else
-                {
-                    usernameTextLayout.top += (int)displayNameTextLayout.height;
-                }
-                DrawText(displayNameTextLayout, (centredTopLeft.X * 2) + rectangleDimensions.Width, displayNameTextLayout.top, brushes["textBrush"], true);
-                DrawText(usernameTextLayout, (centredTopLeft.X * 2) + rectangleDimensions.Width, usernameTextLayout.top, brushes["textBrush"], true);
-                startY = Math.Max(centredTopLeft.Y + borderWidth + rectangleDimensions.Height, centredTopLeft.Y + borderWidth + (int)Math.Round(displayNameTextLayout.height + usernameTextLayout.height));
-            }
-            startY += 90;
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(direct2DCanvas, "File -> New -> 1280x3600 -> Save As -> Something.PNG. You'd think creating a blank PNG in Direct2D wouldn't involve that much learning, but it is day 3 and I think I'm now drawing a blank canvas with a white background off screen. A rectangle in 6 steps sounded way too easy.", centredTopLeft.X, (int)Math.Round(startY), (int)(canvasSize.Width - (centredTopLeft.X * 2)), (int)(canvasSize.Height - Math.Round(startY)), false, "Segoe UI Emoji", 90.0f, 700, "en-GB", out currentTextResult));
-            if (ex1 == null)
-            {
-                DrawText(currentTextResult, centredTopLeft.X, (int)Math.Round(startY), brushes["textBrush"], true);
-                startY += (float)currentTextResult.height;
-            }
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(direct2DCanvas));
-            if (ex1 != null)
-            {
-                return ReturnCode.LOST_D2D1_RENDER_TARGET;
-            }
-            #endregion
-
-            #region Draw Twitter logo and timestamp
-            Interop.UnsafeNativeMethods.BeginDraw(direct2DCanvas);
-            startY += 60;
-            string twitterLogoFilename = @"C:/Users/John/Pictures/Twitch/Twitter_Logo_Blue.png";
-            try
-            {
-                Interop.UnsafeNativeMethods.DrawImageFromFilename(direct2DCanvas, twitterLogoFilename, centredTopLeft.X + borderWidth, (int)Math.Round(startY), rectangleDimensions.Width, rectangleDimensions.Height);
-            }
-            catch (FileNotFoundException e)
-            {
-                Trace.WriteLine($"Error reading file {twitterLogoFilename}: {e.Message} - {e.InnerException?.Message}");
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"An error occurred reading file {profileImageFilename}: {ex.Message} - {ex.InnerException?.Message}");
-            }
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(direct2DCanvas, "August 27th 2020", centredTopLeft.X + rectangleDimensions.Width, (int)Math.Round(startY), canvasSize.Width - (centredTopLeft.X * 2), rectangleDimensions.Height, false, "Noto Sans", (float)(rectangleDimensions.Height / 3), 700, "en-GB", out currentTextResult));
-            if (ex1 == null)
-            {
-                if (currentTextResult.height < rectangleDimensions.Height)
-                {
-                    currentTextResult.top = (int)(startY + ((rectangleDimensions.Height - currentTextResult.height) / 2));
-                }
-                DrawText(currentTextResult, centredTopLeft.X + rectangleDimensions.Width, currentTextResult.top, brushes["textBrush"], true);
-                startY += (float)Math.Max(currentTextResult.height, rectangleDimensions.Height);
-            }
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(direct2DCanvas));
-            if (ex1 != null)
-            {
-                return ReturnCode.LOST_D2D1_RENDER_TARGET;
-            }
-            #endregion
-
-            #region Draw Retweet logo and Retweeter
-            Interop.UnsafeNativeMethods.BeginDraw(direct2DCanvas);
-            string twitterRetweetLogoFilename = @"C:/Users/John/Pictures/Twitch/Twitter_Retweet.png";
-            startY += 50;
-            try
-            {
-                Interop.UnsafeNativeMethods.DrawImageFromFilename(direct2DCanvas, twitterRetweetLogoFilename, centredTopLeft.X + borderWidth + 50, (int)Math.Round(startY), rectangleDimensions.Width - 100, rectangleDimensions.Height - 100);
-            }
-            catch (FileNotFoundException e)
-            {
-                Trace.WriteLine($"Error reading file {twitterRetweetLogoFilename}: {e.Message} - {e.InnerException?.Message}");
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"An error occurred reading file {profileImageFilename}: {ex.Message} - {ex.InnerException?.Message}");
-            }
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(direct2DCanvas, "Nobody", centredTopLeft.X + rectangleDimensions.Width, (int)Math.Round(startY) + 60, canvasSize.Width - (centredTopLeft.X * 2), canvasSize.Height - startY, false, "Noto Sans", (float)(rectangleDimensions.Height / 3), 700, "en-GB", out currentTextResult));
-            if (ex1 == null)
-            {
-                if (currentTextResult.height < rectangleDimensions.Height - 100)
-                {
-                    currentTextResult.top = (int)(startY + ((rectangleDimensions.Height - 100 - currentTextResult.height) / 2));
-                }
-                DrawText(currentTextResult, centredTopLeft.X + rectangleDimensions.Width, currentTextResult.top, brushes["textBrush"], true);
-                startY += (float)Math.Max(currentTextResult.height, rectangleDimensions.Height);
-            }
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(direct2DCanvas));
-            if (ex1 != null)
-            {
-                return ReturnCode.LOST_D2D1_RENDER_TARGET;
-            }
-            #endregion
-
-            #region Free the brushes
-            ReleaseBrushes();
-            #endregion
-
-            Trace.WriteLine("Image drawing successful!");
-
+            
             #region Save Image
             // Date/Time format to append to file name. Custom format because filenames cannot contain colons.
             DateTimeFormat dateTimeFormat = new DateTimeFormat("yyyy-MM-ddTHHmmss.fffffffZ");
@@ -435,7 +507,7 @@ namespace TextFormatter
             string saveLocation = System.IO.Path.Combine(System.IO.Path.GetTempPath(), fileName);
             try
             {
-                Interop.UnsafeNativeMethods.SaveImage(direct2DCanvas, saveLocation);
+                Interop.UnsafeNativeMethods.SaveImage(verticalTweetPanel.Direct2DCanvas, saveLocation);
                 result = ReturnCode.SUCCESS;
                 Trace.WriteLine($"Image successfully saved to {saveLocation}");
                 // Open file explorer with the saved file selected
@@ -446,7 +518,6 @@ namespace TextFormatter
             {
                 Trace.WriteLine($"Error saving to file {saveLocation}: {e.Message} - {e.InnerException?.Message}");
             }
-            return result;
             #endregion
         }
 

@@ -142,19 +142,17 @@ namespace TextFormatter.Interop
         /// Draw a line
         /// </summary>
         /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
-        /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the stroke colour</param>
-        /// <param name="startX">The x coordinate of the first pixel</param>
-        /// <param name="startY">The y coordinate of the first pixel</param>
-        /// <param name="lengthX">The x coordinate of the second pixel</param>
-        /// <param name="lengthY">The y coordinate of the second pixel</param>
-        /// <param name="lineWidth">The brush thickness (line width) of the line drawn</param>
+        /// <param name="lineColor">A pointer to an ID2D1SolidColorBrush for the line colour</param>
+        /// <param name="headingSeparatorPoint1">The coordinates of the start point</param>
+        /// <param name="headingSeparatorPoint2">The coordinates of the end point</param>
+        /// <param name="lineThickness">The brush thickness (line width) of the line drawn</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void DrawLine(Direct2DCanvas pCanvas, IntPtr pD2D1SolidColorBrush, int startX, int startY, int stopX, int stopY, float lineWidth);
+        internal extern static void DrawLine(Direct2DCanvas pCanvas, IntPtr lineColor, Models.PointF headingSeparatorPoint1, Models.PointF headingSeparatorPoint2, float lineThickness);
 
         /// <summary>
         /// Draw a rectangle border
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the border colour</param>
         /// <param name="startX">The x coordinate of the top-left pixel</param>
         /// <param name="startY">The y coordinate of the top-left pixel</param>
@@ -167,19 +165,16 @@ namespace TextFormatter.Interop
         /// <summary>
         /// Draw a rectangle
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the background/fill colour</param>
-        /// <param name="startX">The x coordinate of the top-left pixel</param>
-        /// <param name="startY">The y coordinate of the top-left pixel</param>
-        /// <param name="lengthX">The length of the rectangle in pixels</param>
-        /// <param name="lengthY">The height of the rectangle in pixels</param>
+        /// <param name="bounds">The left, top, right, and bottom of the rectangle</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void DrawRectangle(Direct2DCanvas pCanvas, IntPtr pD2D1SolidColorBrush, int startX, int startY, int lengthX, int lengthY);
+        internal extern static void DrawRectangle(Direct2DCanvas pCanvas, IntPtr pD2D1SolidColorBrush, Models.RectF bounds);
 
         /// <summary>
         /// Call Direct2D BeginDraw() followed by a PushLayer() of an ellipses
         /// </summary>
-        /// <param name="pD2D1RenderTarget">A pointer to an ID2D1RenderTarget</param>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the background/fill colour</param>
         /// <param name="centerX">The x coordinate of the center of the ellipsis</param>
         /// <param name="centerY">The y coordinate of the center of the ellipsis</param>
@@ -202,43 +197,33 @@ namespace TextFormatter.Interop
         /// </summary>
         /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="filename">The path to the file of an existing image</param>
-        /// <param name="startX">The x coordinate of the top-left pixel</param>
-        /// <param name="startY">The y coordinate of the top-left pixel</param>
-        /// <param name="width">The width of the image to be drawn after resizing</param>
-        /// <param name="height">The height of the image to be drawn after resizing</param>
+        /// <param name="originPoint">The coordinates of the top-left pixel</param>
+        /// <param name="bounds">The left, top, right, and bottom of the rectangle</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static int DrawImageFromFilename(Direct2DCanvas pCanvas, String filename, int startX, int startY, int width, int height);
+        internal extern static int DrawImageFromFilename(Direct2DCanvas pCanvas, String filename, Models.PointF originPoint, Models.RectF bounds);
 
         /// <summary>
         /// Create an IDWriteTextLayout
         /// </summary>
         /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="text">A string containing the text to draw</param>
-        /// <param name="startX">The x coordinate of the top-left pixel of the text block</param>
-        /// <param name="startY">The y coordinate of the top-left pixel of the text block</param>
-        /// <param name="width">The width of the text block</param>
-        /// <param name="height">The height of the text block</param>
-        /// <param name="justifyCentered">True if text should be centered, False if it should be left-aligned</param>
-        /// <param name="fontName">A string containing the name of the font</param>
-        /// <param name="fontSize">Desire text size in DIPs</param>
-        /// <param name="fontWeight">Desired font weight (e.g. 400 for normal)</param>
-        /// <param name="localeName">A string containing the locale name, such as "en-GB"</param>
+        /// <param name="bounds">The left, top, right, and bottom of the rectangle</param>
+        /// <param name="fontSettings">The FontSettings for this text</param>
         /// <param name="textLayoutResult">A TextLayoutResult struct</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static int CreateTextLayoutFromString(Direct2DCanvas pCanvas, String text, int startX, int startY, float width, float height, bool justifyCentered, String fontName, float fontSize, int fontWeight, String localeName, out TextLayoutResult textLayoutResult);
+        internal extern static int CreateTextLayoutFromString(Direct2DCanvas pCanvas, String text, Models.RectF bounds, Models.FontSettings fontSettings, out TextLayoutResult textLayoutResult);
 
         /// <summary>
         /// Draw an IDWriteTextLayout
         /// </summary>
         /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <param name="textLayoutResult">A struct TextLayoutResult containing a pointer to an IDWriteTextLayout</param>
-        /// <param name="startX">The x coordinate of the top-left pixel of the text block</param>
-        /// <param name="startY">The y coordinate of the top-left pixel of the text block</param>
+        /// <param name="originPoint">The coordinates of the top-left pixel of the text block</param>
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the text colour</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static void DrawTextLayout(Direct2DCanvas pCanvas, TextLayoutResult textLayoutResult, int startX, int startY, IntPtr pD2D1SolidColorBrush);
+        internal extern static void DrawTextLayout(Direct2DCanvas pCanvas, TextLayoutResult textLayoutResult, Models.PointF originPoint, IntPtr pD2D1SolidColorBrush);
 
         /// <summary>
         /// Free an IDWriteTextLayout

@@ -5,32 +5,8 @@ using System.Text;
 using System.Windows;
 using TextFormatter.Interop;
 
-namespace TextFormatter.Models
+namespace TextFormatter
 {
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct SizeU
-    {
-        public UInt32 Width;
-        public UInt32 Height;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct RectF
-    {
-        public float Left;
-        public float Top;
-        public float Right;
-        public float Bottom;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct PointF
-    {
-        public float X;
-        public float Y;
-    }
-
     public enum CanvasElement
     {
         CANVAS = 0,
@@ -53,7 +29,7 @@ namespace TextFormatter.Models
     {
         #region Variables
         public readonly SizeU PanelRectangle;
-        public Interop.Direct2DCanvas Direct2DCanvas = new Interop.Direct2DCanvas();
+        public Direct2DCanvas Direct2DCanvas = new Direct2DCanvas();
         public UInt32 BackgroundColor;
         private TextLayoutResult headerTextLayout;
         private TextLayoutResult subHeaderTextLayout;
@@ -138,7 +114,7 @@ namespace TextFormatter.Models
         public string RetweeterUsername { get; set; } = String.Empty;
         #endregion
 
-        public TweetPanel(ref Interop.Direct2DPointers direct2DPointers, Models.SizeU canvasSize, UInt32 backgroundColor)
+        public TweetPanel(ref Direct2DPointers direct2DPointers, SizeU canvasSize, UInt32 backgroundColor)
         {
             PanelRectangle = canvasSize;
             BackgroundColor = backgroundColor;
@@ -149,15 +125,15 @@ namespace TextFormatter.Models
         /// <summary>
         /// Create pointers for IWICBitmap and ID2D1RenderTarget, and set the canvas size
         /// </summary>
-        /// <param name="width">Desired bitmap width in pixels</param>
-        /// <param name="height">Desired bitmap height in pixels</param>
-        public void CreateDirect2DCanvas(Models.SizeU canvasSize, ref Interop.Direct2DPointers direct2DPointers)
+        /// <param name="canvasSize">Desired bitmap width and height</param>
+        /// <param name="direct2DPointers">An instantiated instance of Direct2DPointers</param>
+        public void CreateDirect2DCanvas(SizeU canvasSize, ref Direct2DPointers direct2DPointers)
         {
             Exception ex1;
             bool noErrors = true;
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateWICBitmap(ref direct2DPointers, canvasSize.Width, canvasSize.Height, ref Direct2DCanvas));
+            ex1 = Marshal.GetExceptionForHR(UnsafeNativeMethods.CreateWICBitmap(ref direct2DPointers, canvasSize.Width, canvasSize.Height, ref Direct2DCanvas));
             noErrors = noErrors && ex1 == null;
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
+            ex1 = Marshal.GetExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
             noErrors = noErrors && ex1 == null;
             if (!noErrors)
             {
@@ -379,7 +355,7 @@ namespace TextFormatter.Models
             {
                 UnsafeNativeMethods.ReleaseTextLayout(previousLayoutResult);
             }
-            ex1 = Marshal.GetExceptionForHR(Interop.UnsafeNativeMethods.CreateTextLayoutFromString(Direct2DCanvas, GetText(canvasElement), bounds, GetFont(canvasElement), out TextLayoutResult textLayoutResult));
+            ex1 = Marshal.GetExceptionForHR(UnsafeNativeMethods.CreateTextLayoutFromString(Direct2DCanvas, GetText(canvasElement), bounds, GetFont(canvasElement), out TextLayoutResult textLayoutResult));
             if (ex1 == null)
             {
                 SetTextLayout(canvasElement, textLayoutResult);
@@ -393,7 +369,7 @@ namespace TextFormatter.Models
 
         public void DrawHeadingSeparator(IntPtr lineColor, float lineThickness)
         {
-            Interop.UnsafeNativeMethods.DrawLine(Direct2DCanvas, lineColor, HeadingSeparatorPoint1, HeadingSeparatorPoint2, lineThickness);
+            UnsafeNativeMethods.DrawLine(Direct2DCanvas, lineColor, HeadingSeparatorPoint1, HeadingSeparatorPoint2, lineThickness);
         }
 
         public void PushCircleLayer(CanvasElement canvasElement, IntPtr colorBrush)
@@ -407,30 +383,30 @@ namespace TextFormatter.Models
                 X = (int)(originPoint.X + (dimensions.Right / 2)),
                 Y = (int)(originPoint.Y + (dimensions.Bottom / 2))
             };
-            Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.PushEllipseLayer(Direct2DCanvas, colorBrush, centerPointForEllipse.X, centerPointForEllipse.Y, dimensions.Right / 2, dimensions.Bottom / 2));
+            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.PushEllipseLayer(Direct2DCanvas, colorBrush, centerPointForEllipse.X, centerPointForEllipse.Y, dimensions.Right / 2, dimensions.Bottom / 2));
             #endregion
         }
 
         public void PopLayer()
         {
-            Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.PopLayer(Direct2DCanvas));
+            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.PopLayer(Direct2DCanvas));
         }
 
         public void DrawImage(CanvasElement canvasElement)
         {
-            Interop.UnsafeNativeMethods.DrawImageFromFilename(Direct2DCanvas, GetImageFilename(canvasElement), GetOriginPoint(canvasElement), GetRectangle(canvasElement));
+            UnsafeNativeMethods.DrawImageFromFilename(Direct2DCanvas, GetImageFilename(canvasElement), GetOriginPoint(canvasElement), GetRectangle(canvasElement));
         }
 
         public void WipeCanvas(bool beginDraw = true, bool endDraw = true)
         {
             if (beginDraw)
             {
-                Interop.UnsafeNativeMethods.BeginDraw(Direct2DCanvas);
+                UnsafeNativeMethods.BeginDraw(Direct2DCanvas);
             }
-            Interop.UnsafeNativeMethods.DrawImage(Direct2DCanvas, BackgroundColor);
+            UnsafeNativeMethods.DrawImage(Direct2DCanvas, BackgroundColor);
             if (endDraw)
             {
-                Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(Direct2DCanvas));
+                Marshal.ThrowExceptionForHR(UnsafeNativeMethods.EndDraw(Direct2DCanvas));
             }
         }
 
@@ -445,12 +421,12 @@ namespace TextFormatter.Models
             };
             if (beginDraw)
             {
-                Interop.UnsafeNativeMethods.BeginDraw(Direct2DCanvas);
+                UnsafeNativeMethods.BeginDraw(Direct2DCanvas);
             }
-            Interop.UnsafeNativeMethods.DrawRectangle(Direct2DCanvas, backgroundBrush, clearArea);
+            UnsafeNativeMethods.DrawRectangle(Direct2DCanvas, backgroundBrush, clearArea);
             if (endDraw)
             {
-                Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.EndDraw(Direct2DCanvas));
+                Marshal.ThrowExceptionForHR(UnsafeNativeMethods.EndDraw(Direct2DCanvas));
             }
         }
     }

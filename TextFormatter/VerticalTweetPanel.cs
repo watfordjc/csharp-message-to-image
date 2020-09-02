@@ -4,9 +4,9 @@ using System.Text;
 
 namespace TextFormatter
 {
-    public class VerticalTweetPanel : Models.TweetPanel
+    public class VerticalTweetPanel : TweetPanel
     {
-        public VerticalTweetPanel(ref Interop.Direct2DPointers direct2DPointers, Models.SizeU canvasSize, UInt32 backgroundcolor) : base(ref direct2DPointers, canvasSize, backgroundcolor)
+        public VerticalTweetPanel(ref Interop.Direct2DPointers direct2DPointers, Interop.SizeU canvasSize, UInt32 backgroundcolor) : base(ref direct2DPointers, canvasSize, backgroundcolor)
         {
 
         }

@@ -147,7 +147,7 @@ namespace TextFormatter.Interop
         /// <param name="headingSeparatorPoint2">The coordinates of the end point</param>
         /// <param name="lineThickness">The brush thickness (line width) of the line drawn</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void DrawLine(Direct2DCanvas pCanvas, IntPtr lineColor, Models.PointF headingSeparatorPoint1, Models.PointF headingSeparatorPoint2, float lineThickness);
+        internal extern static void DrawLine(Direct2DCanvas pCanvas, IntPtr lineColor, PointF headingSeparatorPoint1, PointF headingSeparatorPoint2, float lineThickness);
 
         /// <summary>
         /// Draw a rectangle border
@@ -169,7 +169,7 @@ namespace TextFormatter.Interop
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the background/fill colour</param>
         /// <param name="bounds">The left, top, right, and bottom of the rectangle</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void DrawRectangle(Direct2DCanvas pCanvas, IntPtr pD2D1SolidColorBrush, Models.RectF bounds);
+        internal extern static void DrawRectangle(Direct2DCanvas pCanvas, IntPtr pD2D1SolidColorBrush, RectF bounds);
 
         /// <summary>
         /// Call Direct2D BeginDraw() followed by a PushLayer() of an ellipses
@@ -201,7 +201,7 @@ namespace TextFormatter.Interop
         /// <param name="bounds">The left, top, right, and bottom of the rectangle</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static int DrawImageFromFilename(Direct2DCanvas pCanvas, String filename, Models.PointF originPoint, Models.RectF bounds);
+        internal extern static int DrawImageFromFilename(Direct2DCanvas pCanvas, String filename, PointF originPoint, RectF bounds);
 
         /// <summary>
         /// Create an IDWriteTextLayout
@@ -213,7 +213,7 @@ namespace TextFormatter.Interop
         /// <param name="textLayoutResult">A TextLayoutResult struct</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static int CreateTextLayoutFromString(Direct2DCanvas pCanvas, String text, Models.RectF bounds, Models.FontSettings fontSettings, out TextLayoutResult textLayoutResult);
+        internal extern static int CreateTextLayoutFromString(Direct2DCanvas pCanvas, String text, RectF bounds, FontSettings fontSettings, out TextLayoutResult textLayoutResult);
 
         /// <summary>
         /// Draw an IDWriteTextLayout
@@ -223,7 +223,7 @@ namespace TextFormatter.Interop
         /// <param name="originPoint">The coordinates of the top-left pixel of the text block</param>
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the text colour</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static void DrawTextLayout(Direct2DCanvas pCanvas, TextLayoutResult textLayoutResult, Models.PointF originPoint, IntPtr pD2D1SolidColorBrush);
+        internal extern static void DrawTextLayout(Direct2DCanvas pCanvas, TextLayoutResult textLayoutResult, PointF originPoint, IntPtr pD2D1SolidColorBrush);
 
         /// <summary>
         /// Free an IDWriteTextLayout

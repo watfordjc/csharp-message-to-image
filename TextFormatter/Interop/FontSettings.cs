@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace TextFormatter.Models
+namespace TextFormatter.Interop
 {
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct FontSettings

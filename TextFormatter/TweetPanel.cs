@@ -321,7 +321,7 @@ namespace TextFormatter
                 CanvasElement.RETWEET_LOGO => RetweetLogoOriginPoint,
                 CanvasElement.RETWEETER_DISPLAY_NAME => RetweeterDisplayNameOriginPoint,
                 CanvasElement.RETWEETER_USERNAME => RetweeterUsernameOriginPoint,
-                _ => throw new NotImplementedException()
+                _ => throw new NotImplementedException($"{nameof(canvasElement)} is not a known element.")
             };
         }
 
@@ -343,7 +343,7 @@ namespace TextFormatter
                 CanvasElement.RETWEET_LOGO => RetweetLogoRectangle,
                 CanvasElement.RETWEETER_DISPLAY_NAME => RetweeterDisplayNameRectangle,
                 CanvasElement.RETWEETER_USERNAME => RetweeterUsernameRectangle,
-                _ => throw new NotImplementedException()
+                _ => throw new NotImplementedException($"{nameof(canvasElement)} is not a known element.")
             };
         }
 

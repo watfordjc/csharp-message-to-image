@@ -179,14 +179,14 @@ namespace TextFormatter
             verticalTweetPanel.SetFont(CanvasElement.DISPLAY_NAME, new Interop.FontSettings()
             {
                 FontName = "Noto Sans",
-                FontSize = 88.0f,
+                FontSize = 82.0f,
                 FontWeight = 700,
                 LocaleName = "en-GB"
             });
             verticalTweetPanel.SetFont(CanvasElement.USERNAME, new Interop.FontSettings()
             {
                 FontName = "Noto Sans",
-                FontSize = 88.0f,
+                FontSize = 82.0f,
                 FontWeight = 500,
                 LocaleName = "en-GB"
             });
@@ -285,7 +285,7 @@ namespace TextFormatter
             #region Set Tweet area relative to canvas
             verticalTweetPanel.TweetOriginPoint = new Interop.PointF()
             {
-                X = 40.0f,
+                X = 60.0f,
                 Y = verticalTweetPanel.HeadingSeparatorRectangle.Bottom + 90.0f
             };
             verticalTweetPanel.TweetRectangle = new Interop.RectF()
@@ -293,16 +293,15 @@ namespace TextFormatter
                 Left = 0,
                 Top = 0,
                 Right = verticalTweetPanel.PanelRectangle.Width - (verticalTweetPanel.TweetOriginPoint.X * 2),
-                Bottom = verticalTweetPanel.PanelRectangle.Height - verticalTweetPanel.TweetOriginPoint.Y
+                Bottom = verticalTweetPanel.PanelRectangle.Height - verticalTweetPanel.TweetOriginPoint.Y - 60.0f
             };
             #endregion
 
             #region Set Tweet profile image area relative to canvas
-            int borderWidth = 0;
             verticalTweetPanel.ProfileImageOriginPoint = new Interop.PointF()
             {
-                X = 60 - borderWidth,
-                Y = verticalTweetPanel.TweetOriginPoint.Y - borderWidth
+                X = verticalTweetPanel.TweetOriginPoint.X,
+                Y = verticalTweetPanel.TweetOriginPoint.Y
             };
             verticalTweetPanel.ProfileImageRectangle = new Interop.RectF()
             {
@@ -356,7 +355,7 @@ namespace TextFormatter
             {
                 Left = 0.0f,
                 Top = 0.0f,
-                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.ProfileImageRectangle.Right,
+                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.ProfileImageRectangle.Right - verticalTweetPanel.ProfileImageOriginPoint.X,
                 Bottom = verticalTweetPanel.ProfileImageRectangle.Bottom / 2
             });
             verticalTweetPanel.DrawTextLayout(CanvasElement.SUBHEADER, brushes["textBrush"]);
@@ -367,7 +366,7 @@ namespace TextFormatter
             {
                 Left = 0.0f,
                 Top = 0.0f,
-                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.ProfileImageRectangle.Right,
+                Right = verticalTweetPanel.TweetRectangle.Right - verticalTweetPanel.ProfileImageRectangle.Right - verticalTweetPanel.ProfileImageOriginPoint.X,
                 Bottom = verticalTweetPanel.ProfileImageRectangle.Bottom / 2
             });
 

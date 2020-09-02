@@ -25,7 +25,7 @@ namespace TextFormatter
         SHARER_USERNAME = 13
     };
 
-    public class TweetPanel
+    public class MessagePanel
     {
         #region Variables
         public readonly SizeU PanelRectangle;
@@ -114,7 +114,7 @@ namespace TextFormatter
         public string SharerUsername { get; set; } = String.Empty;
         #endregion
 
-        public TweetPanel(ref Direct2DPointers direct2DPointers, SizeU canvasSize, UInt32 backgroundColor)
+        public MessagePanel(ref Direct2DPointers direct2DPointers, SizeU canvasSize, UInt32 backgroundColor)
         {
             PanelRectangle = canvasSize;
             BackgroundColor = backgroundColor;

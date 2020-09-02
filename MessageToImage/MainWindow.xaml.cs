@@ -73,7 +73,7 @@ namespace TextFormatter
                 // Create the Direct2D factories
                 CreateDirect2DPointers();
                 // Create the Direct2D bitmap and render target
-                TweetPanel verticalTweetPanel = CreateVerticalTweetPanel();
+                MessagePanel verticalTweetPanel = CreateVerticalTweetPanel();
                 DrawVerticalTweet(verticalTweetPanel, @"G:\Program Files (x86)\mIRC\twimg\tmp\GMMH_NHS.jpg", "Greater Manchester Mental Health", "@GMMH_NHS", "A huge thank you to the wonderful team at HMP Hindley. You are all #GMMHSuperstars! 🌟🌟 #TogetherGMMH 💙", "Today, 13:42 UTC+1");
                 // We're not reusing the render target
                 //Interop.UnsafeNativeMethods.ReleaseRenderTarget(verticalTweetPanel.Direct2DCanvas);
@@ -129,11 +129,11 @@ namespace TextFormatter
             brushes.Clear();
         }
 
-        private TweetPanel CreateVerticalTweetPanel()
+        private MessagePanel CreateVerticalTweetPanel()
         {
             Exception ex1;
 
-            VerticalTweetPanel verticalTweetPanel = new VerticalTweetPanel(
+            VerticalMessagePanel verticalTweetPanel = new VerticalMessagePanel(
                 direct2DPointers: ref direct2DPointers,
                 canvasSize: new Interop.SizeU() { Width = 1280, Height = 3408 },
                 backgroundcolor: (uint)System.Drawing.Color.Black.ToArgb()
@@ -325,7 +325,7 @@ namespace TextFormatter
             return verticalTweetPanel;
         }
 
-        private string DrawVerticalTweet(TweetPanel verticalTweetPanel, string profileImageFilename, string displayName, string username, string text, string time, string retweeterDisplayName = null, string retweeterUsername = null)
+        private string DrawVerticalTweet(MessagePanel verticalTweetPanel, string profileImageFilename, string displayName, string username, string text, string time, string retweeterDisplayName = null, string retweeterUsername = null)
         {
             verticalTweetPanel.ClearArea(verticalTweetPanel.MessageOriginPoint, verticalTweetPanel.MessageRectangle, brushes["backgroundBrush"], true, true);
 

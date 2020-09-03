@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30406.217
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessageToImage", "MessageToImage\MessageToImage.csproj", "{57453944-E799-45CC-8C8B-1AA277955736}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessageToImageLibrary", "MessageToImageLibrary\MessageToImageLibrary.csproj", "{57453944-E799-45CC-8C8B-1AA277955736}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A5887581-E13D-4FC6-966D-00AD9AC05647} = {A5887581-E13D-4FC6-966D-00AD9AC05647}
 	EndProjectSection

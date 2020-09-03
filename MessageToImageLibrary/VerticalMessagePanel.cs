@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace uk.JohnCook.dotnet.MessageToImage
+namespace uk.JohnCook.dotnet.MessageToImageLibrary
 {
     public class VerticalMessagePanel : MessagePanel
     {

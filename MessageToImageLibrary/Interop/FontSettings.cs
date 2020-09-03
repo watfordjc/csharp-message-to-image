@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace uk.JohnCook.dotnet.MessageToImage.Interop
+namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
 {
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct FontSettings

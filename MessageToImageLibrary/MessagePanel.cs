@@ -4,9 +4,9 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
-using uk.JohnCook.dotnet.MessageToImage.Interop;
+using uk.JohnCook.dotnet.MessageToImageLibrary.Interop;
 
-namespace uk.JohnCook.dotnet.MessageToImage
+namespace uk.JohnCook.dotnet.MessageToImageLibrary
 {
     public enum CanvasElement
     {

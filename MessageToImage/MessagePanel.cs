@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
@@ -31,6 +32,7 @@ namespace uk.JohnCook.dotnet.MessageToImage
         public readonly SizeU PanelRectangle;
         public Direct2DCanvas Direct2DCanvas = new Direct2DCanvas();
         public UInt32 BackgroundColor;
+        public readonly Dictionary<string, IntPtr> Brushes = new Dictionary<string, IntPtr>();
         private TextLayoutResult headerTextLayout;
         private TextLayoutResult subHeaderTextLayout;
         private TextLayoutResult displayNameTextLayout;
@@ -129,16 +131,8 @@ namespace uk.JohnCook.dotnet.MessageToImage
         /// <param name="direct2DPointers">An instantiated instance of Direct2DPointers</param>
         public void CreateDirect2DCanvas(SizeU canvasSize, ref Direct2DPointers direct2DPointers)
         {
-            Exception ex1;
-            bool noErrors = true;
-            ex1 = Marshal.GetExceptionForHR(UnsafeNativeMethods.CreateWICBitmap(ref direct2DPointers, canvasSize.Width, canvasSize.Height, ref Direct2DCanvas));
-            noErrors = noErrors && ex1 == null;
-            ex1 = Marshal.GetExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
-            noErrors = noErrors && ex1 == null;
-            if (!noErrors)
-            {
-                throw new Exception($"Error during {nameof(CreateDirect2DCanvas)}.");
-            }
+            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateWICBitmap(ref direct2DPointers, canvasSize.Width, canvasSize.Height, ref Direct2DCanvas));
+            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
         }
 
         public void SetFont(CanvasElement canvasElement, FontSettings fontSettings)
@@ -347,6 +341,37 @@ namespace uk.JohnCook.dotnet.MessageToImage
             };
         }
 
+        public void BeginDraw()
+        {
+            UnsafeNativeMethods.BeginDraw(Direct2DCanvas);
+        }
+
+        public void EndDraw()
+        {
+            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.EndDraw(Direct2DCanvas));
+        }
+
+        public void CreateSolidColorBrush(string colorName, UInt32 color)
+        {
+            Brushes[colorName] = UnsafeNativeMethods.CreateSolidColorBrush(Direct2DCanvas, color);
+            Debug.Assert(Brushes[colorName] != IntPtr.Zero, $"Brush {colorName} has a null pointer.");
+        }
+
+        public void ReleaseSolidColorBrush(string colorName)
+        {
+            UnsafeNativeMethods.ReleaseSolidColorBrush(Brushes[colorName]);
+            Brushes.Remove(colorName);
+        }
+
+        public void ReleaseAllBrushes()
+        {
+            foreach (KeyValuePair<string, IntPtr> entry in Brushes)
+            {
+                UnsafeNativeMethods.ReleaseSolidColorBrush(entry.Value);
+                Brushes.Remove(entry.Key);
+            }
+        }
+
         public void CreateTextLayout(CanvasElement canvasElement, RectF bounds)
         {
             Exception ex1;
@@ -428,6 +453,11 @@ namespace uk.JohnCook.dotnet.MessageToImage
             {
                 Marshal.ThrowExceptionForHR(UnsafeNativeMethods.EndDraw(Direct2DCanvas));
             }
+        }
+
+        public void SaveImage(String filename)
+        {
+            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.SaveImage(Direct2DCanvas, filename));
         }
     }
 }

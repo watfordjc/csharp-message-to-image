@@ -1,9 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
+    <Platforms>AnyCPU;x64;x86</Platforms>
+    <Version>0.1.0</Version>
+    <Authors>John Cook</Authors>
+    <Company>John Cook</Company>
+    <Description>A test/sample C# solution with an ordinary (non-MFC) C++ DLL project.</Description>
+    <Copyright>Copyright © John Cook 2020</Copyright>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/watfordjc/csharp-message-to-image</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/watfordjc/csharp-message-to-image</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>First release of MessageToImage for StreamController.</PackageReleaseNotes>
+    <NeutralLanguage>en-GB</NeutralLanguage>
+    <RootNamespace>uk.JohnCook.dotnet.MessageToImage</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
     <None Include="..\README.md" Link="README.md" />
     <None Include="..\x64\Debug\Direct2DWrapper.dll" Link="lib\Direct2DWrapper.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -20,5 +37,9 @@
   <ItemGroup>
     <PackageReference Include="PInvoke.Windows.Core" Version="0.6.49" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="if &quot;$(ConfigurationName)&quot; == &quot;Release&quot; (&#xD;&#xA;&quot;C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x86\signtool.exe&quot; sign /tr http://timestamp.comodoca.com/rfc3161 /td sha256 /fd sha256 /n  &quot;$(Company)&quot;  &quot;$(TargetDir)$(TargetName).dll&quot; &quot;$(TargetDir)lib\*.dll&quot;&#xD;&#xA;)" />
+  </Target>
 
 </Project>

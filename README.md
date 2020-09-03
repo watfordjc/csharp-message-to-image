@@ -10,30 +10,19 @@ This repository is an off-shoot of [csharp-stream-controller](https://github.com
 
 This project is a non-MFC C++ DLL project.
 
-At the time of writing it has one exported function:
-
-```cpp
-double Add(int a, double b);
-```
+It exports a limited number of functions that are abstractions of some Direct2D and DirectWrite functions.
 
 ## MessageToImage
 
 This is the main C# WPF .NET Core 3.1 project.
 
-At the time of writing, it has the following code inside the ```MainWindow.xaml.cs``` ```MainWindow()``` method:
+It is (now) a C# wrapper around **Direct2DWrapper** providing a limited set of features so that a message (such as a Tweet) can be transformed into a PNG file.
 
-```csharp
-int a = 10;
-double b = 3.0;
-double result = Interop.UnsafeNativeMethods.Add(a, b);
-Trace.WriteLine($"Result of external Add({a}, {b}) = {result}.");
-```
-
-In order to run the project, the **Direct2DWrapper** project will need building to generate Direct2DWrapper.dll and a link file created in **MessageToImage\lib** pointing at the Direct2DWrapper.dll file.
+In order to use the library, the **Direct2DWrapper** project will need building to generate Direct2DWrapper.dll and a link file created in **MessageToImage\lib** pointing at the Direct2DWrapper.dll file.
 
 ### Direct2DWrapper.dll
 
-In order for the C# project to successfully run, it needs to be able to find Direct2DWrapper.dll.
+The C# project needs to be able to find Direct2DWrapper.dll.
 
 1. In Visual Studio 2019, choose **Debug** or **Release** for Solution Configurations and **x64** or **x86** for Solution Platforms.
 2. Right-click the **Direct2DWrapper** project and click **Build**.
@@ -49,10 +38,26 @@ In order for the C# project to successfully run, it needs to be able to find Dir
 
 ### Expected Output
 
-If the projects are built correctly, the Visual Studio debug **Output** window should include the following output:
+**MessageToImage** exports a generic ```Add(int a, double b)``` function found in **Direct2DWrapper**.
+
+If the projects are built correctly, the Visual Studio debug **Output** window should include the following output on instantiation of a C# ```MessageToImage.Direct2DWrapper``` instance:
 
 ```
 Result of external Add(10, 3) = 13.
+```
+ 
+
+```csharp
+class Test()
+{
+    private readonly MessageToImage.Direct2DWrapper d2dWrapper;
+
+    Test()
+    {
+        Trace.WriteLine("Testing DLL...");
+        d2dWrapper = new MessageToImage.Direct2DWrapper();
+    }
+}
 ```
 
 The expected output listed above may be out of date as documentation changes typically lag code changes. Check recent commits for changes.

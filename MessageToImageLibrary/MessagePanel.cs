@@ -26,7 +26,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
         SHARER_USERNAME = 13
     };
 
-    public class MessagePanel
+    public class MessagePanel : IDisposable
     {
         #region Variables
         public readonly SizeU PanelRectangle;
@@ -41,6 +41,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
         private TextLayoutResult timeTextLayout;
         private TextLayoutResult sharerDisplayNameTextLayout;
         private TextLayoutResult sharerUsernameTextLayout;
+        private bool disposedValue;
         #endregion
 
         #region Properties
@@ -458,6 +459,47 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
         public void SaveImage(String filename)
         {
             Marshal.ThrowExceptionForHR(UnsafeNativeMethods.SaveImage(Direct2DCanvas, filename));
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects)
+                    ReleaseAllBrushes();
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(subHeaderTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(displayNameTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(usernameTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(messageTextTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(timeTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(sharerDisplayNameTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(sharerUsernameTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
+                UnsafeNativeMethods.ReleaseRenderTarget(Direct2DCanvas);
+                // TODO: set large fields to null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~MessagePanel()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

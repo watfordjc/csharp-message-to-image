@@ -136,6 +136,29 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
         }
 
+        public void RecreateDirect2DCanvas()
+        {
+            // Release brushes from old render target
+            ReleaseAllBrushes();
+            // Release text layouts from old render target
+            UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
+            UnsafeNativeMethods.ReleaseTextLayout(subHeaderTextLayout);
+            UnsafeNativeMethods.ReleaseTextLayout(displayNameTextLayout);
+            UnsafeNativeMethods.ReleaseTextLayout(usernameTextLayout);
+            UnsafeNativeMethods.ReleaseTextLayout(messageTextTextLayout);
+            UnsafeNativeMethods.ReleaseTextLayout(timeTextLayout);
+            UnsafeNativeMethods.ReleaseTextLayout(sharerDisplayNameTextLayout);
+            UnsafeNativeMethods.ReleaseTextLayout(sharerUsernameTextLayout);
+            UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
+            UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
+            // Release old render target
+            UnsafeNativeMethods.ReleaseRenderTarget(Direct2DCanvas);
+            // Create replacement render target
+            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
+            // Wipe replacement render target with background colour
+            WipeCanvas(true, true);
+        }
+
         public void SetFont(CanvasElement canvasElement, FontSettings fontSettings)
         {
             switch (canvasElement)

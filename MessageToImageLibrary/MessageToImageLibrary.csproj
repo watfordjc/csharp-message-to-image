@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
     <Platforms>AnyCPU;x64;x86</Platforms>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Authors>John Cook</Authors>
     <Company>John Cook</Company>
     <Description>A test/sample C# solution with an ordinary (non-MFC) C++ DLL project.</Description>

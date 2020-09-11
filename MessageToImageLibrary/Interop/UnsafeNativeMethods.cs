@@ -34,7 +34,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// </summary>
         /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void ReleaseD2D1Factory(Direct2DPointers pDirect2DPointers);
+        internal extern static void ReleaseD2D1Factory(ref Direct2DPointers pDirect2DPointers);
 
         /// <summary>
         /// Create an IWICImagingFactory
@@ -49,7 +49,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// </summary>
         /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ReleaseImagingFactory(Direct2DPointers pDirect2DPointers);
+        internal static extern void ReleaseImagingFactory(ref Direct2DPointers pDirect2DPointers);
 
         /// <summary>
         /// Create an IDWriteFactory7
@@ -64,7 +64,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// </summary>
         /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ReleaseDWriteFactory(Direct2DPointers pDirect2DPointers);
+        internal static extern void ReleaseDWriteFactory(ref Direct2DPointers pDirect2DPointers);
 
         /// <summary>
         /// Create an IWICBitmap
@@ -82,7 +82,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// </summary>
         /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ReleaseWICBitmap(Direct2DCanvas pCanvas);
+        internal static extern void ReleaseWICBitmap(ref Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Create an ID2D1RenderTarget
@@ -97,7 +97,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// </summary>
         /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void ReleaseRenderTarget(Direct2DCanvas pCanvas);
+        internal extern static void ReleaseRenderTarget(ref Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Call Direct2D BeginDraw()
@@ -190,7 +190,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
-        internal extern static int PopLayer(Direct2DCanvas pCanvas);
+        internal extern static int PopLayer(ref Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Draw an image from a filename
@@ -230,7 +230,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// </summary>
         /// <param name="textLayoutResult">A pointer to the IDWriteTextLayout to be freed</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static void ReleaseTextLayout(TextLayoutResult textLayoutResult);
+        internal extern static void ReleaseTextLayout(ref TextLayoutResult textLayoutResult);
 
         /// <summary>
         /// Save a drawn image

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Windows;
 using uk.JohnCook.dotnet.MessageToImageLibrary.Interop;
 
@@ -41,6 +42,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
         private TextLayoutResult timeTextLayout;
         private TextLayoutResult sharerDisplayNameTextLayout;
         private TextLayoutResult sharerUsernameTextLayout;
+        private readonly SemaphoreSlim drawingSemaphore = new SemaphoreSlim(1, 1);
         private bool disposedValue;
         #endregion
 
@@ -136,27 +138,56 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
         }
 
+        private void ReleaseIfNotNull(TextLayoutResult textLayoutResult)
+        {
+            if (textLayoutResult.pDWriteTextLayout != IntPtr.Zero)
+            {
+                try
+                {
+                    UnsafeNativeMethods.ReleaseTextLayout(ref textLayoutResult);
+                    textLayoutResult.pDWriteTextLayout = IntPtr.Zero;
+                }
+                catch (Exception e) when (e is COMException || e is AccessViolationException)
+                {
+                    Trace.WriteLine($"Error releasing {nameof(textLayoutResult)} - {e.Message}");
+                    textLayoutResult.pDWriteTextLayout = IntPtr.Zero;
+                }
+            }
+        }
+
         public void RecreateDirect2DCanvas()
         {
             // Release brushes from old render target
+            Trace.WriteLine("Releasing brushes...");
             ReleaseAllBrushes();
             // Release text layouts from old render target
-            UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
-            UnsafeNativeMethods.ReleaseTextLayout(subHeaderTextLayout);
-            UnsafeNativeMethods.ReleaseTextLayout(displayNameTextLayout);
-            UnsafeNativeMethods.ReleaseTextLayout(usernameTextLayout);
-            UnsafeNativeMethods.ReleaseTextLayout(messageTextTextLayout);
-            UnsafeNativeMethods.ReleaseTextLayout(timeTextLayout);
-            UnsafeNativeMethods.ReleaseTextLayout(sharerDisplayNameTextLayout);
-            UnsafeNativeMethods.ReleaseTextLayout(sharerUsernameTextLayout);
-            UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
-            UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
-            // Release old render target
-            UnsafeNativeMethods.ReleaseRenderTarget(Direct2DCanvas);
+            Trace.WriteLine("Releasing headerTextLayout...");
+            ReleaseIfNotNull(headerTextLayout);
+            Trace.WriteLine("Releasing subHeaderTextLayout...");
+            ReleaseIfNotNull(subHeaderTextLayout);
+            Trace.WriteLine("Releasing displayNameTextLayout...");
+            ReleaseIfNotNull(displayNameTextLayout);
+            Trace.WriteLine("Releasing usernameTextLayout...");
+            ReleaseIfNotNull(usernameTextLayout);
+            Trace.WriteLine("Releasing messageTextTextLayout...");
+            ReleaseIfNotNull(messageTextTextLayout);
+            Trace.WriteLine("Releasing timeTextLayout...");
+            ReleaseIfNotNull(timeTextLayout);
+            Trace.WriteLine("Releasing sharerDisplayNameTextLayout...");
+            ReleaseIfNotNull(sharerDisplayNameTextLayout);
+            Trace.WriteLine("Releasing sharerUsernameTextLayout...");
+            ReleaseIfNotNull(sharerUsernameTextLayout);
+            Trace.WriteLine("Releasing headerTextLayout...");
+            ReleaseIfNotNull(headerTextLayout);
+            Trace.WriteLine("Releasing headerTextLayout...");
+            ReleaseIfNotNull(headerTextLayout);
             // Create replacement render target
+            Trace.WriteLine("Recreating render target...");
             Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
             // Wipe replacement render target with background colour
+            Trace.WriteLine("Calling WipeCanvas...");
             WipeCanvas(true, true);
+            Trace.WriteLine("Recreated render target.");
         }
 
         public void SetFont(CanvasElement canvasElement, FontSettings fontSettings)
@@ -365,14 +396,26 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             };
         }
 
-        public void BeginDraw()
+        public void BeginDraw(bool noWait = false)
         {
+            if (!noWait)
+            {
+                drawingSemaphore.Wait();
+            }
             UnsafeNativeMethods.BeginDraw(Direct2DCanvas);
         }
 
-        public void EndDraw()
+        public void EndDraw(bool noWait = false)
         {
-            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.EndDraw(Direct2DCanvas));
+            Exception hr1 = Marshal.GetExceptionForHR(UnsafeNativeMethods.EndDraw(Direct2DCanvas));
+            if (!noWait)
+            {
+                drawingSemaphore.Release();
+            }
+            if (hr1 != null)
+            {
+                throw hr1;
+            }
         }
 
         public void CreateSolidColorBrush(string colorName, UInt32 color)
@@ -402,7 +445,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             TextLayoutResult previousLayoutResult = GetTextLayout(canvasElement);
             if (previousLayoutResult.pDWriteTextLayout != IntPtr.Zero)
             {
-                UnsafeNativeMethods.ReleaseTextLayout(previousLayoutResult);
+                ReleaseIfNotNull(previousLayoutResult);
             }
             ex1 = Marshal.GetExceptionForHR(UnsafeNativeMethods.CreateTextLayoutFromString(Direct2DCanvas, GetText(canvasElement), bounds, GetFont(canvasElement), out TextLayoutResult textLayoutResult));
             if (ex1 == null)
@@ -438,7 +481,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
 
         public void PopLayer()
         {
-            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.PopLayer(Direct2DCanvas));
+            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.PopLayer(ref Direct2DCanvas));
         }
 
         public void DrawImage(CanvasElement canvasElement)
@@ -495,17 +538,17 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(subHeaderTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(displayNameTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(usernameTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(messageTextTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(timeTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(sharerDisplayNameTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(sharerUsernameTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(headerTextLayout);
-                UnsafeNativeMethods.ReleaseRenderTarget(Direct2DCanvas);
+                UnsafeNativeMethods.ReleaseTextLayout(ref headerTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(ref subHeaderTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(ref displayNameTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(ref usernameTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(ref messageTextTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(ref timeTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(ref sharerDisplayNameTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(ref sharerUsernameTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(ref headerTextLayout);
+                UnsafeNativeMethods.ReleaseTextLayout(ref headerTextLayout);
+                UnsafeNativeMethods.ReleaseRenderTarget(ref Direct2DCanvas);
                 // TODO: set large fields to null
                 disposedValue = true;
             }

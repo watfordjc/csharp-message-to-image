@@ -37,19 +37,51 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         internal extern static void ReleaseD2D1Factory(ref Direct2DPointers pDirect2DPointers);
 
         /// <summary>
-        /// Create an IWICImagingFactory
+        /// Create an ID3D11Device
         /// </summary>
         /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
-        internal static extern int CreateImagingFactory(ref Direct2DPointers pDirect2DPointers);
+        internal extern static int CreateD3D11Device(ref Direct2DPointers pDirect2DPointers);
 
         /// <summary>
-        /// Free an IWICImagingFactory
+        /// Free an ID3D11Device
         /// </summary>
         /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ReleaseImagingFactory(ref Direct2DPointers pDirect2DPointers);
+        internal extern static void ReleaseD3D11Device(ref Direct2DPointers pDirect2DPointers);
+
+        /// <summary>
+        /// Create an IDXGIDevice
+        /// </summary>
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal extern static int CreateDXGIDevice(ref Direct2DPointers pDirect2DPointers);
+
+        /// <summary>
+        /// Free an IDXGIDevice
+        /// </summary>
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
+        internal extern static void ReleaseDXGIDevice(ref Direct2DPointers pDirect2DPointers);
+
+        /// <summary>
+        /// Create an IDXGISwapChain1
+        /// </summary>
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
+        /// <param name="width">Desired bitmap width in pixels</param>
+        /// <param name="height">Desired bitmap height in pixels</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal extern static int CreateDXGISwapChain(ref Direct2DPointers pDirect2DPointers, UInt32 width, UInt32 height, ref Direct2DCanvas pCanvas);
+
+        /// <summary>
+        /// Free an IDXGISwapChain1
+        /// </summary>
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
+        internal extern static void ReleaseDXGISwapChain(ref Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Create an IDWriteFactory7
@@ -65,24 +97,6 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ReleaseDWriteFactory(ref Direct2DPointers pDirect2DPointers);
-
-        /// <summary>
-        /// Create an IWICBitmap
-        /// </summary>
-        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
-        /// <param name="width">Desired bitmap width in pixels</param>
-        /// <param name="height">Desired bitmap height in pixels</param>
-        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
-        /// <returns>0 if successful, otherwise throws an exception</returns>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
-        internal static extern int CreateWICBitmap(ref Direct2DPointers pDirect2DPointers, uint width, uint height, ref Direct2DCanvas pCanvas);
-
-        /// <summary>
-        /// Free an IWICBitmap
-        /// </summary>
-        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ReleaseWICBitmap(ref Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Create an ID2D1RenderTarget

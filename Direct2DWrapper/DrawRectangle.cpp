@@ -21,14 +21,28 @@ namespace Direct2DWrapper
 
 	struct Direct2DPointers
 	{
-		ID2D1Factory* Direct2DFactory;
+		// Pointers for Direct2D
+		ID2D1Factory1* Direct2DFactory;
+		ID2D1Device* Direct2DDevice;
+		ID2D1DeviceContext* Direct2DDeviceContext;
 		IDWriteFactory7* DirectWriteFactory;
-		IWICImagingFactory* WICImagingFactory;
+		//IWICImagingFactory* WICImagingFactory;
+
+		// Pointers for Direct3D
+		ID3D11Device* Direct3DDevice;
+		D3D_FEATURE_LEVEL* Direct3DFeatureLevel;
+		ID3D11DeviceContext* Direct3DDeviceContext;
+
+		// Pointers for DXGI
+		IDXGIDevice* DXGIDevice;
+		IDXGIFactory2* DXGIFactory;
 	};
 
 	struct Direct2DCanvas
 	{
-		IWICBitmap* Bitmap;
+		IDXGISwapChain1* DXGISwapChain;
+		IDXGISurface2* Surface;
+		ID2D1Bitmap1* Bitmap;
 		ID2D1RenderTarget* RenderTarget;
 		struct Direct2DPointers Direct2DPointers;
 	};
@@ -48,11 +62,11 @@ namespace Direct2DWrapper
 		D2D1_FACTORY_OPTIONS factoryOptions;
 		//factoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 
-		HRESULT hr = D2D1CreateFactory(
+		HRESULT hr = D2D1CreateFactory<ID2D1Factory1>(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
 			//factoryOptions,
 			&pDirect2DPointers->Direct2DFactory
-		);
+			);
 		return hr;
 	}
 
@@ -63,22 +77,112 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT CreateImagingFactory(struct Direct2DPointers* pDirect2DPointers)
+		HRESULT CreateD3D11Device(struct Direct2DPointers* pDirect2DPointers)
 	{
-		HRESULT hr = CoCreateInstance(
-			CLSID_WICImagingFactory,
-			nullptr,
-			CLSCTX_INPROC_SERVER,
-			__uuidof(IWICImagingFactory),
-			reinterpret_cast<void**>(&pDirect2DPointers->WICImagingFactory)
+		UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+
+		D3D_FEATURE_LEVEL featureLevels[] =
+		{
+			D3D_FEATURE_LEVEL_11_1,
+			D3D_FEATURE_LEVEL_11_0,
+			D3D_FEATURE_LEVEL_10_1,
+			D3D_FEATURE_LEVEL_10_0,
+			D3D_FEATURE_LEVEL_9_3,
+			D3D_FEATURE_LEVEL_9_2,
+			D3D_FEATURE_LEVEL_9_1
+		};
+
+		HRESULT hr = D3D11CreateDevice(
+			nullptr,									// specify null to use the default adapter
+			D3D_DRIVER_TYPE_HARDWARE,
+			0,
+			creationFlags,								// optionally set debug and Direct2D compatibility flags
+			featureLevels,								// list of feature levels this app can support
+			ARRAYSIZE(featureLevels),					// number of possible feature levels
+			D3D11_SDK_VERSION,
+			&pDirect2DPointers->Direct3DDevice,         // returns the Direct3D device created
+			pDirect2DPointers->Direct3DFeatureLevel,    // returns feature level of device created
+			&pDirect2DPointers->Direct3DDeviceContext   // returns the device immediate context
 		);
 		return hr;
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void ReleaseImagingFactory(struct Direct2DPointers* direct2DPointers)
+		void ReleaseD3D11Device(struct Direct2DPointers* pDirect2DPointers)
 	{
-		SafeRelease(&direct2DPointers->WICImagingFactory);
+		SafeRelease(&pDirect2DPointers->Direct3DDeviceContext);
+		SafeRelease(&pDirect2DPointers->Direct3DDevice);
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT CreateDXGIDevice(struct Direct2DPointers* pDirect2DPointers)
+	{
+		HRESULT hr = pDirect2DPointers->Direct3DDevice->QueryInterface(
+			__uuidof(IDXGIDevice),
+			reinterpret_cast<void**>(&pDirect2DPointers->DXGIDevice)
+		);
+		if (SUCCEEDED(hr))
+		{
+			hr = CreateDXGIFactory2(
+				DXGI_CREATE_FACTORY_DEBUG,
+				__uuidof(IDXGIFactory2),
+				reinterpret_cast<void**>(&pDirect2DPointers->DXGIFactory)
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = pDirect2DPointers->Direct2DFactory->CreateDevice(
+				pDirect2DPointers->DXGIDevice,
+				&pDirect2DPointers->Direct2DDevice
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = pDirect2DPointers->Direct2DDevice->CreateDeviceContext(
+				D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+				&pDirect2DPointers->Direct2DDeviceContext
+			);
+		}
+		return hr;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseDXGIDevice(struct Direct2DPointers* pDirect2DPointers)
+	{
+		SafeRelease(&pDirect2DPointers->Direct2DDeviceContext);
+		SafeRelease(&pDirect2DPointers->Direct2DDevice);
+		pDirect2DPointers->DXGIFactory->Release();
+		pDirect2DPointers->DXGIDevice->Release();
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT CreateDXGISwapChain(struct Direct2DPointers* pDirect2DPointers, UINT width, UINT height, struct Direct2DCanvas* pCanvas)
+	{
+		pCanvas->Direct2DPointers = *pDirect2DPointers;
+
+		DXGI_SWAP_CHAIN_DESC1 description = {};
+		description.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		description.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		description.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+		description.BufferCount = 2;
+		description.SampleDesc.Count = 1;
+		description.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
+		description.Width = width;
+		description.Height = height;
+
+		HRESULT hr = pDirect2DPointers->DXGIFactory->CreateSwapChainForComposition(
+			pDirect2DPointers->DXGIDevice,
+			&description,
+			nullptr,
+			&pCanvas->DXGISwapChain
+		);
+		return hr;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseDXGISwapChain(struct Direct2DCanvas* pCanvas)
+	{
+		SafeRelease(&pCanvas->DXGISwapChain);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
@@ -98,27 +202,6 @@ namespace Direct2DWrapper
 		SafeRelease(&direct2DPointers->DirectWriteFactory);
 	}
 
-
-	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT CreateWICBitmap(struct Direct2DPointers* pDirect2DPointers, UINT width, UINT height, struct Direct2DCanvas* pCanvas)
-	{
-		pCanvas->Direct2DPointers = *pDirect2DPointers;
-		HRESULT hr = pDirect2DPointers->WICImagingFactory->CreateBitmap(
-			width,
-			height,
-			GUID_WICPixelFormat32bppPBGRA,
-			WICBitmapCacheOnLoad,
-			&pCanvas->Bitmap
-		);
-		return hr;
-	}
-
-	DIRECT2DWRAPPER_C_FUNCTION
-		void ReleaseWICBitmap(struct Direct2DCanvas* pCanvas)
-	{
-		SafeRelease(&pCanvas->Bitmap);
-	}
-
 	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT CreateRenderTarget(struct Direct2DCanvas* pCanvas)
 	{
@@ -129,11 +212,34 @@ namespace Direct2DWrapper
 		);
 		targetProperties.pixelFormat = desiredFormat;
 
-		HRESULT hr = pCanvas->Direct2DPointers.Direct2DFactory->CreateWicBitmapRenderTarget(
-			pCanvas->Bitmap,
-			targetProperties,
-			&pCanvas->RenderTarget
+		D2D1_BITMAP_PROPERTIES1 properties = {};
+		properties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+		properties.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		properties.bitmapOptions =
+			D2D1_BITMAP_OPTIONS_TARGET |
+			D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+
+		HRESULT hr = pCanvas->DXGISwapChain->GetBuffer(
+			0, // index
+			__uuidof(IDXGISurface2),
+			reinterpret_cast<void**>(&pCanvas->Surface)
 		);
+		if (SUCCEEDED(hr))
+		{
+			pCanvas->Direct2DPointers.Direct2DDeviceContext->CreateBitmapFromDxgiSurface(
+				pCanvas->Surface,
+				properties,
+				&pCanvas->Bitmap
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			pCanvas->Direct2DPointers.Direct2DFactory->CreateDxgiSurfaceRenderTarget(
+				pCanvas->Surface,
+				targetProperties,
+				&pCanvas->RenderTarget
+			);
+		}
 		return hr;
 	}
 
@@ -141,6 +247,8 @@ namespace Direct2DWrapper
 		void ReleaseRenderTarget(struct Direct2DCanvas* pCanvas)
 	{
 		SafeRelease(&pCanvas->RenderTarget);
+		SafeRelease(&pCanvas->Bitmap);
+		pCanvas->Surface->Release();
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
@@ -287,104 +395,105 @@ namespace Direct2DWrapper
 	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT DrawImageFromFilename(struct Direct2DCanvas* pCanvas, PCWSTR filename, D2D1_POINT_2F originPoint, D2D1_RECT_F bounds)
 	{
-		IWICBitmapDecoder* pWICBitmapDecoder = NULL;
-		IWICBitmapFrameDecode* pWICBitmapFrameDecode = NULL;
-		IWICFormatConverter* pWICFormatConverter = NULL;
-		ID2D1Bitmap* pD2D1Bitmap = NULL;
-		ID2D1Effect* pBitmapSourceEffect = NULL;
-		ID2D1DeviceContext* pD2D1DeviceContext = NULL;
+		//IWICBitmapDecoder* pWICBitmapDecoder = NULL;
+		//IWICBitmapFrameDecode* pWICBitmapFrameDecode = NULL;
+		//IWICFormatConverter* pWICFormatConverter = NULL;
+		//ID2D1Bitmap* pD2D1Bitmap = NULL;
+		//ID2D1Effect* pBitmapSourceEffect = NULL;
+		//ID2D1DeviceContext* pD2D1DeviceContext = NULL;
 
-		HRESULT hr = pCanvas->RenderTarget->QueryInterface(
-			__uuidof(ID2D1DeviceContext),
-			reinterpret_cast<void**>(&pD2D1DeviceContext)
-		);
-		if (SUCCEEDED(hr))
-		{
-			hr = pCanvas->Direct2DPointers.WICImagingFactory->CreateDecoderFromFilename(
-				filename,
-				NULL,
-				GENERIC_READ,
-				WICDecodeMetadataCacheOnLoad,
-				&pWICBitmapDecoder
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pWICBitmapDecoder->GetFrame(0, &pWICBitmapFrameDecode);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pCanvas->Direct2DPointers.WICImagingFactory->CreateFormatConverter(&pWICFormatConverter);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pWICFormatConverter->Initialize(
-				pWICBitmapFrameDecode,
-				GUID_WICPixelFormat32bppPBGRA,
-				WICBitmapDitherTypeNone,
-				NULL,
-				0.f,
-				WICBitmapPaletteTypeMedianCut
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pD2D1DeviceContext->CreateBitmapFromWicBitmap(
-				pWICFormatConverter,
-				NULL,
-				&pD2D1Bitmap
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pD2D1DeviceContext->CreateEffect(
-				CLSID_D2D1BitmapSource,
-				&pBitmapSourceEffect
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pBitmapSourceEffect->SetValue(
-				D2D1_BITMAPSOURCE_PROP_WIC_BITMAP_SOURCE,
-				pWICFormatConverter
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			D2D1_SIZE_F originalSize = pD2D1Bitmap->GetSize();
-			D2D1_VECTOR_2F resizeVector = D2D1::Vector2F(
-				bounds.right / originalSize.width,
-				bounds.bottom / originalSize.height
-			);
-			hr = pBitmapSourceEffect->SetValue(
-				D2D1_BITMAPSOURCE_PROP_SCALE,
-				resizeVector
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pBitmapSourceEffect->SetValue(
-				D2D1_BITMAPSOURCE_PROP_INTERPOLATION_MODE,
-				D2D1_BITMAPSOURCE_INTERPOLATION_MODE_CUBIC
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			pD2D1DeviceContext->DrawImage(
-				pBitmapSourceEffect,
-				originPoint,
-				bounds,
-				D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC,
-				D2D1_COMPOSITE_MODE_SOURCE_OVER
-			);
-		}
-		SafeRelease(&pBitmapSourceEffect);
-		SafeRelease(&pD2D1Bitmap);
-		SafeRelease(&pWICFormatConverter);
-		SafeRelease(&pWICBitmapFrameDecode);
-		SafeRelease(&pWICBitmapDecoder);
-		pD2D1DeviceContext->Release();
-		return hr;
+		//HRESULT hr = pCanvas->RenderTarget->QueryInterface(
+		//	__uuidof(ID2D1DeviceContext),
+		//	reinterpret_cast<void**>(&pD2D1DeviceContext)
+		//);
+		//if (SUCCEEDED(hr))
+		//{
+		//	hr = pCanvas->Direct2DPointers.WICImagingFactory->CreateDecoderFromFilename(
+		//		filename,
+		//		NULL,
+		//		GENERIC_READ,
+		//		WICDecodeMetadataCacheOnLoad,
+		//		&pWICBitmapDecoder
+		//	);
+		//}
+		//if (SUCCEEDED(hr))
+		//{
+		//	hr = pWICBitmapDecoder->GetFrame(0, &pWICBitmapFrameDecode);
+		//}
+		//if (SUCCEEDED(hr))
+		//{
+		//	hr = pCanvas->Direct2DPointers.WICImagingFactory->CreateFormatConverter(&pWICFormatConverter);
+		//}
+		//if (SUCCEEDED(hr))
+		//{
+		//	hr = pWICFormatConverter->Initialize(
+		//		pWICBitmapFrameDecode,
+		//		GUID_WICPixelFormat32bppPBGRA,
+		//		WICBitmapDitherTypeNone,
+		//		NULL,
+		//		0.f,
+		//		WICBitmapPaletteTypeMedianCut
+		//	);
+		//}
+		//if (SUCCEEDED(hr))
+		//{
+		//	hr = pD2D1DeviceContext->CreateBitmapFromWicBitmap(
+		//		pWICFormatConverter,
+		//		NULL,
+		//		&pD2D1Bitmap
+		//	);
+		//}
+		//if (SUCCEEDED(hr))
+		//{
+		//	hr = pD2D1DeviceContext->CreateEffect(
+		//		CLSID_D2D1BitmapSource,
+		//		&pBitmapSourceEffect
+		//	);
+		//}
+		//if (SUCCEEDED(hr))
+		//{
+		//	hr = pBitmapSourceEffect->SetValue(
+		//		D2D1_BITMAPSOURCE_PROP_WIC_BITMAP_SOURCE,
+		//		pWICFormatConverter
+		//	);
+		//}
+		//if (SUCCEEDED(hr))
+		//{
+		//	D2D1_SIZE_F originalSize = pD2D1Bitmap->GetSize();
+		//	D2D1_VECTOR_2F resizeVector = D2D1::Vector2F(
+		//		bounds.right / originalSize.width,
+		//		bounds.bottom / originalSize.height
+		//	);
+		//	hr = pBitmapSourceEffect->SetValue(
+		//		D2D1_BITMAPSOURCE_PROP_SCALE,
+		//		resizeVector
+		//	);
+		//}
+		//if (SUCCEEDED(hr))
+		//{
+		//	hr = pBitmapSourceEffect->SetValue(
+		//		D2D1_BITMAPSOURCE_PROP_INTERPOLATION_MODE,
+		//		D2D1_BITMAPSOURCE_INTERPOLATION_MODE_CUBIC
+		//	);
+		//}
+		//if (SUCCEEDED(hr))
+		//{
+		//	pD2D1DeviceContext->DrawImage(
+		//		pBitmapSourceEffect,
+		//		originPoint,
+		//		bounds,
+		//		D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC,
+		//		D2D1_COMPOSITE_MODE_SOURCE_OVER
+		//	);
+		//}
+		//SafeRelease(&pBitmapSourceEffect);
+		//SafeRelease(&pD2D1Bitmap);
+		//SafeRelease(&pWICFormatConverter);
+		//SafeRelease(&pWICBitmapFrameDecode);
+		//SafeRelease(&pWICBitmapDecoder);
+		//pD2D1DeviceContext->Release();
+		//return hr;
+		return 0;
 	}
 
 	struct TextLayoutResult {
@@ -526,76 +635,28 @@ namespace Direct2DWrapper
 	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT SaveImage(struct Direct2DCanvas* pCanvas, PCWSTR filename)
 	{
+		WICPixelFormatGUID pixelFormat = GUID_WICPixelFormat32bppBGRA;
 
-		IWICStream* pWICStream = NULL;
-		IWICBitmapEncoder* pWICBitmapEncoder = NULL;
-		IWICBitmapFrameEncode* pWICBitmapFrameEncode = NULL;
-		WICPixelFormatGUID pixelFormat = GUID_WICPixelFormatDontCare;
-
-		HRESULT hr = pCanvas->Direct2DPointers.WICImagingFactory->CreateStream(&pWICStream);
-
+		ID3D11Texture2D* backBuffer;
+		HRESULT hr = pCanvas->DXGISwapChain->GetBuffer(
+			0,
+			__uuidof(ID3D11Texture2D),
+			reinterpret_cast<void**>(&backBuffer)
+		);
 		if (SUCCEEDED(hr))
 		{
-			hr = pWICStream->InitializeFromFilename(
-				filename,
-				GENERIC_WRITE
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pCanvas->Direct2DPointers.WICImagingFactory->CreateEncoder(
+			using namespace DirectX;
+			hr = SaveWICTextureToFile(
+				pCanvas->Direct2DPointers.Direct3DDeviceContext,
+				backBuffer,
 				GUID_ContainerFormatPng,
-				NULL,
-				&pWICBitmapEncoder
+				filename,
+				&pixelFormat,
+				nullptr,
+				true
 			);
 		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pWICBitmapEncoder->Initialize(
-				pWICStream,
-				WICBitmapEncoderNoCache
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pWICBitmapEncoder->CreateNewFrame(
-				&pWICBitmapFrameEncode,
-				NULL
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pWICBitmapFrameEncode->Initialize(NULL);
-		}
-		if (SUCCEEDED(hr))
-		{
-			D2D1_SIZE_U renderTargetSize = pCanvas->RenderTarget->GetPixelSize();
-			hr = pWICBitmapFrameEncode->SetSize(
-				renderTargetSize.width,
-				renderTargetSize.height
-			);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pWICBitmapFrameEncode->SetPixelFormat(&pixelFormat);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pWICBitmapFrameEncode->WriteSource(pCanvas->Bitmap, NULL);
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pWICBitmapFrameEncode->Commit();
-		}
-		if (SUCCEEDED(hr))
-		{
-			hr = pWICBitmapEncoder->Commit();
-		}
-
-		SafeRelease(&pWICBitmapFrameEncode);
-		SafeRelease(&pWICBitmapEncoder);
-		SafeRelease(&pWICStream);
-
+		backBuffer->Release();
 		return hr;
 	}
 

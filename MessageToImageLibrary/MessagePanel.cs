@@ -134,7 +134,8 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
         /// <param name="direct2DPointers">An instantiated instance of Direct2DPointers</param>
         public void CreateDirect2DCanvas(SizeU canvasSize, ref Direct2DPointers direct2DPointers)
         {
-            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateWICBitmap(ref direct2DPointers, canvasSize.Width, canvasSize.Height, ref Direct2DCanvas));
+            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateDXGISwapChain(ref direct2DPointers, canvasSize.Width, canvasSize.Height, ref Direct2DCanvas));
+            //Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateWICBitmap(ref direct2DPointers, canvasSize.Width, canvasSize.Height, ref Direct2DCanvas));
             Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
         }
 

@@ -22,22 +22,28 @@ namespace Direct2DWrapper
 		void ReleaseD2D1Factory(struct Direct2DPointers* direct2DPointers);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT CreateImagingFactory(struct Direct2DPointers* direct2DPointers);
+		HRESULT CreateD3D11Device(struct Direct2DPointers* pDirect2DPointers);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		void ReleaseImagingFactory(struct Direct2DPointers* direct2DPointers);
+		void ReleaseD3D11Device(struct Direct2DPointers* pDirect2DPointers);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT CreateDXGIDevice(struct Direct2DPointers* pDirect2DPointers);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseDXGIDevice(struct Direct2DPointers* pDirect2DPointers);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT CreateDXGISwapChain(struct Direct2DPointers* pDirect2DPointers, UINT width, UINT height, struct Direct2DCanvas* pCanvas);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseDXGISwapChain(struct Direct2DCanvas* pCanvas);
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT CreateDWriteFactory(struct Direct2DPointers* direct2DPointers);
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		void ReleaseDWriteFactory(struct Direct2DPointers* direct2DPointers);
-
-	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT CreateWICBitmap(struct Direct2DPointers* pDirect2DPointers, UINT width, UINT height, struct Direct2DCanvas* pCanvas);
-
-	DIRECT2DWRAPPER_C_FUNCTION
-		void ReleaseWICBitmap(struct Direct2DCanvas* pCanvas);
 
 	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT CreateRenderTarget(struct Direct2DCanvas* pCanvas);

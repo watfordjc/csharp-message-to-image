@@ -8,8 +8,19 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
     [StructLayout(LayoutKind.Sequential)]
     public struct Direct2DPointers
     {
-        public IntPtr Direct2DFactory;
+		// Pointers for Direct2D
+		public IntPtr Direct2DFactory;
+		public IntPtr Direct2DDevice;
+		public IntPtr Direct2DDeviceContext;
         public IntPtr DirectWriteFactory;
-        public IntPtr WICImagingFactory;
-    }
+
+		// Pointers for Direct3D
+		public IntPtr Direct3DDevice;
+		public IntPtr Direct3DFeatureLevel;
+		public IntPtr Direct3DDeviceContext;
+
+		// Pointers for DXGI
+		public IntPtr DXGIDevice;
+		public IntPtr DXGIFactory;
+	}
 }

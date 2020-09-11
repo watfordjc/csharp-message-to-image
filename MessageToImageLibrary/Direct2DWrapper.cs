@@ -33,13 +33,15 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             try
             {
                 Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.CreateD2D1Factory(ref direct2DPointers));
+                Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.CreateD3D11Device(ref direct2DPointers));
+                Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.CreateDXGIDevice(ref direct2DPointers));
                 Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.CreateDWriteFactory(ref direct2DPointers));
-                Marshal.ThrowExceptionForHR(Interop.UnsafeNativeMethods.CreateImagingFactory(ref direct2DPointers));
             }
             catch (COMException ce)
             {
                 Interop.UnsafeNativeMethods.ReleaseDWriteFactory(ref direct2DPointers);
-                Interop.UnsafeNativeMethods.ReleaseImagingFactory(ref direct2DPointers);
+                Interop.UnsafeNativeMethods.ReleaseDXGIDevice(ref direct2DPointers);
+                Interop.UnsafeNativeMethods.ReleaseD3D11Device(ref direct2DPointers);
                 Interop.UnsafeNativeMethods.ReleaseD2D1Factory(ref direct2DPointers);
                 Trace.WriteLine($"COMException in {nameof(CreateDirect2DPointers)} - {ce.Message} - {ce.InnerException?.Message}");
                 throw;
@@ -72,7 +74,8 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
                 Interop.UnsafeNativeMethods.ReleaseDWriteFactory(ref direct2DPointers);
-                Interop.UnsafeNativeMethods.ReleaseImagingFactory(ref direct2DPointers);
+                Interop.UnsafeNativeMethods.ReleaseDXGIDevice(ref direct2DPointers);
+                Interop.UnsafeNativeMethods.ReleaseD3D11Device(ref direct2DPointers);
                 Interop.UnsafeNativeMethods.ReleaseD2D1Factory(ref direct2DPointers);
                 // TODO: set large fields to null
                 disposedValue = true;

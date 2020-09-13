@@ -13,6 +13,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
 		public IntPtr Direct2DDevice;
 		public IntPtr Direct2DDeviceContext;
         public IntPtr DirectWriteFactory;
+		public IntPtr WICImagingFactory;
 
 		// Pointers for Direct3D
 		public IntPtr Direct3DDevice;

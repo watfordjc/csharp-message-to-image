@@ -79,9 +79,6 @@ namespace Direct2DWrapper
 		HRESULT PopLayer(struct Direct2DCanvas* pCanvas);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT DrawImageFromFilename(struct Direct2DCanvas* pCanvas, PCWSTR filename, D2D1_POINT_2F originPoint, D2D1_RECT_F bounds);
-
-	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT CreateTextLayoutFromString(struct Direct2DCanvas* pCanvas, PCWSTR text, D2D1_RECT_F bounds, struct FontSettings* fontSettings, struct TextLayoutResult* textLayoutResult);
 
 	DIRECT2DWRAPPER_C_FUNCTION
@@ -94,6 +91,15 @@ namespace Direct2DWrapper
 		void DrawImage(struct Direct2DCanvas* pCanvas, UINT32 argb);
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT SaveImage(struct Direct2DCanvas* pCanvas, PCWSTR filename);
-} // namespace Direct2DWrapper
+		HRESULT CreateImagingFactory(struct Direct2DPointers* direct2DPointers);
 
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseImagingFactory(struct Direct2DPointers* direct2DPointers);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT DrawImageFromFilename(struct Direct2DCanvas* pCanvas, PCWSTR filename, D2D1_POINT_2F originPoint, D2D1_RECT_F bounds);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT SaveImage(struct Direct2DCanvas* pCanvas, PCWSTR filename);
+
+} // namespace Direct2DWrapper

@@ -139,7 +139,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
         }
 
-        private void ReleaseIfNotNull(TextLayoutResult textLayoutResult)
+        private void ReleaseIfNotNull(ref TextLayoutResult textLayoutResult)
         {
             if (textLayoutResult.pDWriteTextLayout != IntPtr.Zero)
             {
@@ -163,25 +163,25 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             ReleaseAllBrushes();
             // Release text layouts from old render target
             Trace.WriteLine("Releasing headerTextLayout...");
-            ReleaseIfNotNull(headerTextLayout);
+            ReleaseIfNotNull(ref headerTextLayout);
             Trace.WriteLine("Releasing subHeaderTextLayout...");
-            ReleaseIfNotNull(subHeaderTextLayout);
+            ReleaseIfNotNull(ref subHeaderTextLayout);
             Trace.WriteLine("Releasing displayNameTextLayout...");
-            ReleaseIfNotNull(displayNameTextLayout);
+            ReleaseIfNotNull(ref displayNameTextLayout);
             Trace.WriteLine("Releasing usernameTextLayout...");
-            ReleaseIfNotNull(usernameTextLayout);
+            ReleaseIfNotNull(ref usernameTextLayout);
             Trace.WriteLine("Releasing messageTextTextLayout...");
-            ReleaseIfNotNull(messageTextTextLayout);
+            ReleaseIfNotNull(ref messageTextTextLayout);
             Trace.WriteLine("Releasing timeTextLayout...");
-            ReleaseIfNotNull(timeTextLayout);
+            ReleaseIfNotNull(ref timeTextLayout);
             Trace.WriteLine("Releasing sharerDisplayNameTextLayout...");
-            ReleaseIfNotNull(sharerDisplayNameTextLayout);
+            ReleaseIfNotNull(ref sharerDisplayNameTextLayout);
             Trace.WriteLine("Releasing sharerUsernameTextLayout...");
-            ReleaseIfNotNull(sharerUsernameTextLayout);
+            ReleaseIfNotNull(ref sharerUsernameTextLayout);
             Trace.WriteLine("Releasing headerTextLayout...");
-            ReleaseIfNotNull(headerTextLayout);
+            ReleaseIfNotNull(ref headerTextLayout);
             Trace.WriteLine("Releasing headerTextLayout...");
-            ReleaseIfNotNull(headerTextLayout);
+            ReleaseIfNotNull(ref headerTextLayout);
             // Create replacement render target
             Trace.WriteLine("Recreating render target...");
             Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
@@ -444,10 +444,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
         {
             Exception ex1;
             TextLayoutResult previousLayoutResult = GetTextLayout(canvasElement);
-            if (previousLayoutResult.pDWriteTextLayout != IntPtr.Zero)
-            {
-                ReleaseIfNotNull(previousLayoutResult);
-            }
+            ReleaseIfNotNull(ref previousLayoutResult);
             ex1 = Marshal.GetExceptionForHR(UnsafeNativeMethods.CreateTextLayoutFromString(Direct2DCanvas, GetText(canvasElement), bounds, GetFont(canvasElement), out TextLayoutResult textLayoutResult));
             if (ex1 == null)
             {

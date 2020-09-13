@@ -129,14 +129,6 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         internal extern static int EndDraw(Direct2DCanvas pCanvas);
 
         /// <summary>
-        /// Draw an image
-        /// </summary>
-        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
-        /// <param name="clearColor">A 32-bit unsigned integer containing the 8-bit values for ARGB - 0xAARRGGBB</param>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static void DrawImage(Direct2DCanvas pCanvas, UInt32 clearColor);
-
-        /// <summary>
         /// Create an ID2D1SolidColorBrush
         /// </summary>
         /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
@@ -207,17 +199,6 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         internal extern static int PopLayer(ref Direct2DCanvas pCanvas);
 
         /// <summary>
-        /// Draw an image from a filename
-        /// </summary>
-        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
-        /// <param name="filename">The path to the file of an existing image</param>
-        /// <param name="originPoint">The coordinates of the top-left pixel</param>
-        /// <param name="bounds">The left, top, right, and bottom of the rectangle</param>
-        /// <returns>0 if successful, otherwise throws an exception</returns>
-        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static int DrawImageFromFilename(Direct2DCanvas pCanvas, String filename, PointF originPoint, RectF bounds);
-
-        /// <summary>
         /// Create an IDWriteTextLayout
         /// </summary>
         /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
@@ -245,6 +226,40 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// <param name="textLayoutResult">A pointer to the IDWriteTextLayout to be freed</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
         internal extern static void ReleaseTextLayout(ref TextLayoutResult textLayoutResult);
+
+        /// <summary>
+        /// Draw an image
+        /// </summary>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
+        /// <param name="clearColor">A 32-bit unsigned integer containing the 8-bit values for ARGB - 0xAARRGGBB</param>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
+        internal extern static void DrawImage(Direct2DCanvas pCanvas, UInt32 clearColor);
+
+        /// <summary>
+        /// Create an IWICImagingFactory
+        /// </summary>
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal static extern int CreateImagingFactory(ref Direct2DPointers pDirect2DPointers);
+
+        /// <summary>
+        /// Free an IWICImagingFactory
+        /// </summary>
+        /// <param name="pDirect2DPointers">An instantiated instance of Direct2DPointers</param>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ReleaseImagingFactory(ref Direct2DPointers pDirect2DPointers);
+
+        /// <summary>
+        /// Draw an image from a filename
+        /// </summary>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
+        /// <param name="filename">The path to the file of an existing image</param>
+        /// <param name="originPoint">The coordinates of the top-left pixel</param>
+        /// <param name="bounds">The left, top, right, and bottom of the rectangle</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
+        internal extern static int DrawImageFromFilename(Direct2DCanvas pCanvas, String filename, PointF originPoint, RectF bounds);
 
         /// <summary>
         /// Save a drawn image

@@ -44,7 +44,9 @@ namespace Direct2DWrapper
 		IDXGISurface2* Surface;
 		ID2D1Bitmap1* Bitmap;
 		ID2D1RenderTarget* RenderTarget;
-		HANDLE SwapChainHandle;
+		ID3D11Texture2D* SharedTexture;
+		HANDLE SharedHandle;
+		IDXGIKeyedMutex* SharedTextureMutex;
 		struct Direct2DPointers Direct2DPointers;
 	};
 
@@ -652,11 +654,12 @@ namespace Direct2DWrapper
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
-		HRESULT SaveImage(struct Direct2DCanvas* pCanvas, PCWSTR filename)
+		HRESULT UpdateHandle(struct Direct2DCanvas* pCanvas)
 	{
-		WICPixelFormatGUID pixelFormat = GUID_WICPixelFormat32bppBGRA;
-
 		ID3D11Texture2D* backBuffer;
+		IDXGIResource* pDXGIResource = NULL;
+		D3D11_TEXTURE2D_DESC desc;
+
 		HRESULT hr = pCanvas->DXGISwapChain->GetBuffer(
 			0,
 			__uuidof(ID3D11Texture2D),
@@ -664,16 +667,108 @@ namespace Direct2DWrapper
 		);
 		if (SUCCEEDED(hr))
 		{
+			backBuffer->GetDesc(&desc);
+			desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+			desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+			hr = pCanvas->Direct2DPointers.Direct3DDevice->CreateTexture2D(
+				&desc,
+				NULL,
+				&pCanvas->SharedTexture
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = pCanvas->SharedTexture->QueryInterface(
+				__uuidof(IDXGIResource),
+				(LPVOID*)&pDXGIResource
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = pDXGIResource->GetSharedHandle(&pCanvas->SharedHandle);
+			pDXGIResource->Release();
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = pCanvas->SharedTexture->QueryInterface(
+				__uuidof(IDXGIKeyedMutex),
+				(LPVOID*)&pCanvas->SharedTextureMutex
+			);
+		}
+		return hr;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT UpdateImage(struct Direct2DCanvas* pCanvas)
+	{
+		WICPixelFormatGUID pixelFormat = GUID_WICPixelFormat32bppBGRA;
+		bool haveMutex = false;
+		ID3D11Texture2D* backBuffer = NULL;
+
+		HRESULT hr = pCanvas->DXGISwapChain->GetBuffer(
+			0,
+			__uuidof(ID3D11Texture2D),
+			reinterpret_cast<void**>(&backBuffer)
+		);
+		if (SUCCEEDED(hr))
+		{
+			hr = pCanvas->SharedTextureMutex->AcquireSync(0, 1000);
+		}
+		if (SUCCEEDED(hr))
+		{
+			haveMutex = true;
+			pCanvas->Direct2DPointers.Direct3DDeviceContext->CopyResource(
+				pCanvas->SharedTexture,
+				backBuffer
+			);
+		}
+		if (haveMutex) {
+			pCanvas->SharedTextureMutex->ReleaseSync(0);
+		}
+		backBuffer->Release();
+		return hr;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT SaveImage(struct Direct2DCanvas* pCanvas, PCWSTR filename)
+	{
+		WICPixelFormatGUID pixelFormat = GUID_WICPixelFormat32bppBGRA;
+		bool haveMutex = false;
+		ID3D11Texture2D* backBuffer = NULL;
+
+		HRESULT hr = pCanvas->DXGISwapChain->GetBuffer(
+			0,
+			__uuidof(ID3D11Texture2D),
+			reinterpret_cast<void**>(&backBuffer)
+		);
+		if (SUCCEEDED(hr))
+		{
+			hr = pCanvas->SharedTextureMutex->AcquireSync(0, 1000);
+		}
+		if (SUCCEEDED(hr))
+		{
+			haveMutex = true;
+			pCanvas->Direct2DPointers.Direct3DDeviceContext->CopyResource(
+				pCanvas->SharedTexture,
+				backBuffer
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
 			using namespace DirectX;
 			hr = SaveWICTextureToFile(
 				pCanvas->Direct2DPointers.Direct3DDeviceContext,
-				backBuffer,
+				pCanvas->SharedTexture,
 				GUID_ContainerFormatPng,
 				filename,
 				&pixelFormat,
 				nullptr,
 				true
 			);
+		}
+		if (haveMutex) {
+			pCanvas->SharedTextureMutex->ReleaseSync(0);
 		}
 		backBuffer->Release();
 		return hr;

@@ -29,7 +29,7 @@
       <PackagePath></PackagePath>
     </None>
     <None Include="..\README.md" Link="README.md" />
-    <None Include="..\x64\Debug\Direct2DWrapper.dll" Link="lib\Direct2DWrapper.dll">
+    <None Include="..\..\StreamController\x64\Debug\Direct2DWrapper.dll" Link="lib\Direct2DWrapper.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

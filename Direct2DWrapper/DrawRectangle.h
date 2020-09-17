@@ -100,6 +100,12 @@ namespace Direct2DWrapper
 		HRESULT DrawImageFromFilename(struct Direct2DCanvas* pCanvas, PCWSTR filename, D2D1_POINT_2F originPoint, D2D1_RECT_F bounds);
 
 	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT UpdateHandle(struct Direct2DCanvas* pCanvas);
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		HRESULT UpdateImage(struct Direct2DCanvas* pCanvas);
+
+	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT SaveImage(struct Direct2DCanvas* pCanvas, PCWSTR filename);
 
 } // namespace Direct2DWrapper

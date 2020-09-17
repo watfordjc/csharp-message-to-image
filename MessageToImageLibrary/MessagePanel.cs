@@ -125,6 +125,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             BackgroundColor = backgroundColor;
             CreateDirect2DCanvas(PanelRectangle, ref direct2DPointers);
             WipeCanvas();
+            AnnounceHandle();
         }
 
         /// <summary>
@@ -189,6 +190,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             Trace.WriteLine("Calling WipeCanvas...");
             WipeCanvas(true, true);
             Trace.WriteLine("Recreated render target.");
+            AnnounceHandle();
         }
 
         public void SetFont(CanvasElement canvasElement, FontSettings fontSettings)
@@ -500,6 +502,20 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             }
         }
 
+        public void AnnounceHandle()
+        {
+            try
+            {
+                UnsafeNativeMethods.UpdateHandle(ref Direct2DCanvas);
+                Trace.WriteLine($"Handle: {Direct2DCanvas.SharedHandle.ToString("x")}");
+            }
+            catch (COMException ce)
+            {
+                Trace.WriteLine($"Error updating handle: {ce.Message} - {ce.HResult}");
+            }
+
+        }
+
         public void ClearArea(PointF originPoint, RectF areaOfCanvas, IntPtr backgroundBrush, bool beginDraw = true, bool endDraw = true)
         {
             RectF clearArea = new RectF()
@@ -518,6 +534,11 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             {
                 Marshal.ThrowExceptionForHR(UnsafeNativeMethods.EndDraw(Direct2DCanvas));
             }
+        }
+
+        public void UpdateImage()
+        {
+            Marshal.ThrowExceptionForHR(UnsafeNativeMethods.UpdateImage(Direct2DCanvas));
         }
 
         public void SaveImage(String filename)

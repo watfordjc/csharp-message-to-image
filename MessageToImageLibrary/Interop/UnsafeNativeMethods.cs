@@ -262,6 +262,22 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         internal extern static int DrawImageFromFilename(Direct2DCanvas pCanvas, String filename, PointF originPoint, RectF bounds);
 
         /// <summary>
+        /// Update the value of pCanvas.SharedHandle
+        /// </summary>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal extern static int UpdateHandle(ref Direct2DCanvas pCanvas);
+
+        /// <summary>
+        /// Update the image
+        /// </summary>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
+        /// <returns>0 if successful, otherwise throws an exception</returns>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
+        internal extern static int UpdateImage(Direct2DCanvas pCanvas);
+
+        /// <summary>
         /// Save a drawn image
         /// </summary>
         /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>

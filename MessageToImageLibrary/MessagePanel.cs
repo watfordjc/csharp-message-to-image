@@ -136,7 +136,6 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
         public void CreateDirect2DCanvas(SizeU canvasSize, ref Direct2DPointers direct2DPointers)
         {
             Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateDXGISwapChain(ref direct2DPointers, canvasSize.Width, canvasSize.Height, ref Direct2DCanvas));
-            //Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateWICBitmap(ref direct2DPointers, canvasSize.Width, canvasSize.Height, ref Direct2DCanvas));
             Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
         }
 
@@ -179,10 +178,6 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             ReleaseIfNotNull(ref sharerDisplayNameTextLayout);
             Trace.WriteLine("Releasing sharerUsernameTextLayout...");
             ReleaseIfNotNull(ref sharerUsernameTextLayout);
-            Trace.WriteLine("Releasing headerTextLayout...");
-            ReleaseIfNotNull(ref headerTextLayout);
-            Trace.WriteLine("Releasing headerTextLayout...");
-            ReleaseIfNotNull(ref headerTextLayout);
             // Create replacement render target
             Trace.WriteLine("Recreating render target...");
             Marshal.ThrowExceptionForHR(UnsafeNativeMethods.CreateRenderTarget(ref Direct2DCanvas));
@@ -447,7 +442,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
             Exception ex1;
             TextLayoutResult previousLayoutResult = GetTextLayout(canvasElement);
             ReleaseIfNotNull(ref previousLayoutResult);
-            ex1 = Marshal.GetExceptionForHR(UnsafeNativeMethods.CreateTextLayoutFromString(Direct2DCanvas, GetText(canvasElement), bounds, GetFont(canvasElement), out TextLayoutResult textLayoutResult));
+            ex1 = Marshal.GetExceptionForHR(UnsafeNativeMethods.CreateTextLayoutFromString(ref Direct2DCanvas, GetText(canvasElement), bounds, GetFont(canvasElement), out TextLayoutResult textLayoutResult));
             if (ex1 == null)
             {
                 SetTextLayout(canvasElement, textLayoutResult);
@@ -456,7 +451,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
 
         public void DrawTextLayout(CanvasElement canvasElement, IntPtr colorBrush)
         {
-            UnsafeNativeMethods.DrawTextLayout(Direct2DCanvas, GetTextLayout(canvasElement), GetOriginPoint(canvasElement), colorBrush);
+            UnsafeNativeMethods.DrawTextLayout(ref Direct2DCanvas, GetTextLayout(canvasElement), GetOriginPoint(canvasElement), colorBrush);
         }
 
         public void DrawHeadingSeparator(IntPtr lineColor, float lineThickness)
@@ -553,21 +548,23 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects)
-                    ReleaseAllBrushes();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                UnsafeNativeMethods.ReleaseTextLayout(ref headerTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(ref subHeaderTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(ref displayNameTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(ref usernameTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(ref messageTextTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(ref timeTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(ref sharerDisplayNameTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(ref sharerUsernameTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(ref headerTextLayout);
-                UnsafeNativeMethods.ReleaseTextLayout(ref headerTextLayout);
+
+                UnsafeNativeMethods.ReleaseHandle(ref Direct2DCanvas);
                 UnsafeNativeMethods.ReleaseRenderTarget(ref Direct2DCanvas);
+                ReleaseAllBrushes();
+                UnsafeNativeMethods.ReleaseDXGISwapChain(ref Direct2DCanvas);
+                ReleaseIfNotNull(ref headerTextLayout);
+                ReleaseIfNotNull(ref subHeaderTextLayout);
+                ReleaseIfNotNull(ref displayNameTextLayout);
+                ReleaseIfNotNull(ref usernameTextLayout);
+                ReleaseIfNotNull(ref messageTextTextLayout);
+                ReleaseIfNotNull(ref timeTextLayout);
+                ReleaseIfNotNull(ref sharerDisplayNameTextLayout);
+                ReleaseIfNotNull(ref sharerUsernameTextLayout);
+
                 // TODO: set large fields to null
                 disposedValue = true;
             }

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "DrawRectangle.h"
+#include <memory>
 
 namespace Direct2DWrapper
 {
@@ -154,8 +155,8 @@ namespace Direct2DWrapper
 	{
 		SafeRelease(&pDirect2DPointers->Direct2DDeviceContext);
 		SafeRelease(&pDirect2DPointers->Direct2DDevice);
-		pDirect2DPointers->DXGIFactory->Release();
-		pDirect2DPointers->DXGIDevice->Release();
+		SafeRelease(&pDirect2DPointers->DXGIFactory);
+		SafeRelease(&pDirect2DPointers->DXGIDevice);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
@@ -251,7 +252,7 @@ namespace Direct2DWrapper
 	{
 		SafeRelease(&pCanvas->RenderTarget);
 		SafeRelease(&pCanvas->Bitmap);
-		pCanvas->Surface->Release();
+		SafeRelease(&pCanvas->Surface);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION
@@ -298,8 +299,8 @@ namespace Direct2DWrapper
 			D2D1::RectF(
 				startX + (lineWidth / 2),
 				startY + (lineWidth / 2),
-				startX + lengthX + (lineWidth * 1.5),
-				startY + lengthY + (lineWidth * 1.5)
+				startX + lengthX + (lineWidth * 1.5f),
+				startY + lengthY + (lineWidth * 1.5f)
 			),
 			pD2D1SolidColorBrush,
 			lineWidth
@@ -373,7 +374,7 @@ namespace Direct2DWrapper
 		}
 
 		SafeRelease(&ellipseMask);
-		pD2D1DeviceContext->Release();
+		SafeRelease(&pD2D1DeviceContext);
 		return hr;
 	}
 
@@ -409,7 +410,7 @@ namespace Direct2DWrapper
 	{
 		ID2D1DeviceContext4* pD2D1DeviceContext = NULL;
 		IDWriteTextFormat3* pDWriteTextFormat3 = NULL;
-		UINT32 len = wcslen(text);
+		UINT32 len = static_cast<UINT32>(wcslen(text));
 		DWRITE_TEXT_METRICS1 metrics;
 
 		HRESULT hr = pCanvas->RenderTarget->QueryInterface(
@@ -429,7 +430,6 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			IDWriteTextFormat* pDWriteTextFormat = NULL;
 			hr = pCanvas->Direct2DPointers.DirectWriteFactory->CreateTextFormat(
 				fontSettings->FontName,
 				NULL,
@@ -438,9 +438,8 @@ namespace Direct2DWrapper
 				DWRITE_FONT_STRETCH_NORMAL,
 				fontSettings->FontSize,
 				fontSettings->LocaleName,
-				&pDWriteTextFormat
+				reinterpret_cast<IDWriteTextFormat**>(&pDWriteTextFormat3)
 			);
-			pDWriteTextFormat3 = (IDWriteTextFormat3*)pDWriteTextFormat;
 		}
 		if (SUCCEEDED(hr) && fontSettings->JustifyCentered)
 		{
@@ -456,16 +455,14 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
-			IDWriteTextLayout* pDWriteTextLayout;
 			hr = pCanvas->Direct2DPointers.DirectWriteFactory->CreateTextLayout(
 				text,
 				len,
 				pDWriteTextFormat3,
 				bounds.right,
 				bounds.bottom,
-				&pDWriteTextLayout
+				reinterpret_cast<IDWriteTextLayout**>(&textLayoutResult->pDWriteTextLayout)
 			);
-			textLayoutResult->pDWriteTextLayout = (IDWriteTextLayout4*)pDWriteTextLayout;
 		}
 		if (SUCCEEDED(hr))
 		{
@@ -483,13 +480,13 @@ namespace Direct2DWrapper
 		{
 			hr = textLayoutResult->pDWriteTextLayout->GetMetrics(&metrics);
 			textLayoutResult->lineCount = metrics.lineCount;
-			textLayoutResult->top = (double)metrics.top;
+			textLayoutResult->top = (int)metrics.top;
 			textLayoutResult->height = max(metrics.heightIncludingTrailingWhitespace, 0) > 0 ? (double)metrics.heightIncludingTrailingWhitespace : (double)metrics.height;
-			textLayoutResult->left = (double)metrics.left;
+			textLayoutResult->left = (int)metrics.left;
 			textLayoutResult->width = max(metrics.widthIncludingTrailingWhitespace, 0) > 0 ? (double)metrics.widthIncludingTrailingWhitespace : (double)metrics.width;
 		}
 		SafeRelease(&pDWriteTextFormat3);
-		pD2D1DeviceContext->Release();
+		SafeRelease(&pD2D1DeviceContext);
 		return hr;
 	}
 
@@ -510,8 +507,8 @@ namespace Direct2DWrapper
 				pD2D1SolidColorBrush,
 				D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT
 			);
-			pD2D1DeviceContext->Release();
 		}
+		SafeRelease(&pD2D1DeviceContext);
 		return hr;
 	}
 
@@ -649,7 +646,7 @@ namespace Direct2DWrapper
 		SafeRelease(&pWICFormatConverter);
 		SafeRelease(&pWICBitmapFrameDecode);
 		SafeRelease(&pWICBitmapDecoder);
-		pD2D1DeviceContext->Release();
+		SafeRelease(&pD2D1DeviceContext);
 		return hr;
 	}
 
@@ -671,6 +668,7 @@ namespace Direct2DWrapper
 			desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 			desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 
+			SafeRelease(&pCanvas->SharedTexture);
 			hr = pCanvas->Direct2DPointers.Direct3DDevice->CreateTexture2D(
 				&desc,
 				NULL,
@@ -691,12 +689,24 @@ namespace Direct2DWrapper
 		}
 		if (SUCCEEDED(hr))
 		{
+			SafeRelease(&pCanvas->SharedTextureMutex);
 			hr = pCanvas->SharedTexture->QueryInterface(
 				__uuidof(IDXGIKeyedMutex),
 				(LPVOID*)&pCanvas->SharedTextureMutex
 			);
 		}
+		SafeRelease(&backBuffer);
 		return hr;
+	}
+
+	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseHandle(struct Direct2DCanvas* pCanvas)
+	{
+		pCanvas->SharedTextureMutex->AcquireSync(0, 0);
+		SafeRelease(&pCanvas->SharedTexture);
+		pCanvas->SharedHandle = NULL;
+		pCanvas->SharedTextureMutex->ReleaseSync(1);
+		SafeRelease(&pCanvas->SharedTextureMutex);
 	}
 
 	DIRECT2DWRAPPER_C_FUNCTION

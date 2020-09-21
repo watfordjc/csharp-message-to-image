@@ -208,7 +208,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// <param name="textLayoutResult">A TextLayoutResult struct</param>
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static int CreateTextLayoutFromString(Direct2DCanvas pCanvas, String text, RectF bounds, FontSettings fontSettings, out TextLayoutResult textLayoutResult);
+        internal extern static int CreateTextLayoutFromString(ref Direct2DCanvas pCanvas, String text, RectF bounds, FontSettings fontSettings, out TextLayoutResult textLayoutResult);
 
         /// <summary>
         /// Draw an IDWriteTextLayout
@@ -218,7 +218,7 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// <param name="originPoint">The coordinates of the top-left pixel of the text block</param>
         /// <param name="pD2D1SolidColorBrush">A pointer to an ID2D1SolidColorBrush for the text colour</param>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, PreserveSig = false)]
-        internal extern static void DrawTextLayout(Direct2DCanvas pCanvas, TextLayoutResult textLayoutResult, PointF originPoint, IntPtr pD2D1SolidColorBrush);
+        internal extern static void DrawTextLayout(ref Direct2DCanvas pCanvas, TextLayoutResult textLayoutResult, PointF originPoint, IntPtr pD2D1SolidColorBrush);
 
         /// <summary>
         /// Free an IDWriteTextLayout
@@ -268,6 +268,13 @@ namespace uk.JohnCook.dotnet.MessageToImageLibrary.Interop
         /// <returns>0 if successful, otherwise throws an exception</returns>
         [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl, PreserveSig = false)]
         internal extern static int UpdateHandle(ref Direct2DCanvas pCanvas);
+
+        /// <summary>
+        /// Release a shared texture and its handle
+        /// </summary>
+        /// <param name="pCanvas">An instantiated instance of Direct2DCanvas</param>
+        [DllImport(Import.lib, CallingConvention = CallingConvention.Cdecl)]
+        internal extern static void ReleaseHandle(ref Direct2DCanvas pCanvas);
 
         /// <summary>
         /// Update the image

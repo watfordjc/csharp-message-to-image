@@ -103,6 +103,9 @@ namespace Direct2DWrapper
 		HRESULT UpdateHandle(struct Direct2DCanvas* pCanvas);
 
 	DIRECT2DWRAPPER_C_FUNCTION
+		void ReleaseHandle(struct Direct2DCanvas* pCanvas);
+
+	DIRECT2DWRAPPER_C_FUNCTION
 		HRESULT UpdateImage(struct Direct2DCanvas* pCanvas);
 
 	DIRECT2DWRAPPER_C_FUNCTION
